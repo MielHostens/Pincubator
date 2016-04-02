@@ -5,6 +5,9 @@ import RPi.GPIO as GPIO
 import plotly.plotly as py
 import pynma
 
+import configparser
+config = configparser.ConfigParser()
+
 from datetime import datetime, date
 from plotly.graph_objs import *
 
@@ -51,11 +54,10 @@ time.sleep(rotsec)
 GPIO.output(pinOR, GPIO.HIGH)
 lastrotation = datetime.now()
 
-
-
 print "Succesfully connected to Plot.ly"
 #nma
-p = pynma.PyNMA("a049cdfd83ac44724d615ad756b16ab2387be1abf184ae0f")
+#p = pynma.PyNMA("a049cdfd83ac44724d615ad756b16ab2387be1abf184ae0f")
+p = pynma.PyNMA(config['pynma']['Key'])
 print "Succesfully connected to Notify My Android"
 print " "
 print "Ignoring first 2 sensor values to improve quality..."
