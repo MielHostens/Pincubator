@@ -63,3 +63,4 @@ target/
 
 # My own additions
 config.ini
+out.log
