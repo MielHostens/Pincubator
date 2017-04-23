@@ -20,6 +20,7 @@ lib64/
 parts/
 sdist/
 var/
+config/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -62,5 +63,5 @@ target/
 .ipynb_checkpoints
 
 # My own additions
-config.ini
 out.log
+err.log
