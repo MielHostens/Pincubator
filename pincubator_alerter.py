@@ -64,7 +64,7 @@ def is_number(s):
 
 
 #p = pynma.PyNMA(config_nma["Key"])
-p = pynma.PyNMA("bee42af102c51e31e7e5cc29009662d9bd70bb5335a95998")
+p = pynma.PyNMA("YOUR NMA KEY")
 
 print("Succesfully connected to Notify My Android")
 print(" ")
