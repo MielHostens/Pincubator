@@ -1,27 +1,29 @@
-#include <Arduino.h>;
 
 /* How to use the DHT-22 sensor with Arduino uno
    Temperature and humidity sensor
 */
 
 //Libraries
-#include <DHT.h>;
+#include <DHT.h>
+#include <Arduino.h>
+#include <cozir.h>
+#include <SoftwareSerial.h>
 
-// Constants for relay board
+// Constants for Arduino relay board
 #define RELAY_ON 0
 #define RELAY_OFF 1
 
-//Constants for sensors
+//Constants for DHT sensors
 #define DHTPIN_EXT 2     // what pin is connected to the outside temperature room (OUT)
 #define DHTPIN_INT 3     // what pin is connected to the inside temperature room (IN)
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 
-//Constants for relay board
+//Constants for Arduino relay board switches
 #define RELAYPIN_HEAT 7
 #define RELAYPIN_VENT_HEAT 6
 #define RELAYPIN_HUM 8
 #define RELAYPIN_TURN 9
-#define RELAYPIN_VENT 10
+#define RELAYPIN_VENT 12
 
 
 DHT dht_ext(DHTPIN_EXT, DHTTYPE); //// Initialize DHT sensor EXT for normal 16mhz Arduino
@@ -34,6 +36,12 @@ float hum_int;  //Stores internal humidity value
 float temp_int; //Stores internal temperature value
 float hum_ext;  //Stores external humidity value
 float temp_ext; //Stores external temperature value
+
+//Cozir 
+float temp_cozir;
+float hum_cozir;
+int c_cozir;
+int digi_cozir;
 
 
 // temperature settings
@@ -55,6 +63,11 @@ unsigned long TurnwindowStartTime;
 long VentWindowSize = 3600000;
 unsigned long VentwindowStartTime;
 
+//Initialize COZIR
+SoftwareSerial nss(10,11);
+COZIR czr(nss);
+
+
 void setup()
 {
   //-------( Initialize Pins so relays are inactive at reset)----
@@ -63,6 +76,7 @@ void setup()
   digitalWrite(RELAYPIN_HUM, RELAY_OFF);
   digitalWrite(RELAYPIN_TURN, RELAY_OFF);
   digitalWrite(RELAYPIN_VENT, RELAY_OFF);
+  digitalWrite(13, RELAY_OFF);
 
   //---( THEN set pins as outputs )----
   pinMode(RELAYPIN_HEAT, OUTPUT);    
@@ -80,45 +94,56 @@ void setup()
   VentwindowStartTime = millis();
         
   //initialize the variables we're linked to
-  temp_ext_set = 39.8;
-  temp_int_set = 37.6;
+  temp_ext_set = 39.6;
+  temp_int_set = 37.8;
   hum_int_set = 55;
   
 
   //start serial signaling
   Serial.begin(9600);
-  //turn sensors on
+  //turn DHT sensors on
   dht_ext.begin();
   dht_int.begin();
-  
+  //turn Cozir sensors on
+  delay(5000);
+  //czr.SetOperatingMode(CZR_POLLING);
+  //czr.SetOperatingMode(CZR_STREAMING);
+  //czr.CalibrateFreshAir();
+  //czr.SetDigiFilter(64);
 }
 
 void loop()
 {
-    delay(2000);
+    delay(4000);
     //Read data and store it to variables hum and temp
     hum_ext = dht_ext.readHumidity();
     temp_ext= dht_ext.readTemperature();
     hum_int = dht_int.readHumidity();
     temp_int= dht_int.readTemperature();
+    temp_cozir = czr.Celsius();
+    hum_cozir = czr.Humidity();
+    c_cozir = czr.CO2();
+    digi_cozir = czr.GetDigiFilter();
     //Print temp and humidity values to serial monitor
-    Serial.print("Hum_int: ");
+    Serial.print("Hum int: ");
     Serial.print(hum_int);
-    Serial.print(" %, Temp_int: ");
+    Serial.print("%, Temp int: ");
     Serial.print(temp_int);
-    Serial.print(" °C");
-    Serial.print(", Hum_ext: ");
+    Serial.print("°C, Hum ext: ");
     Serial.print(hum_ext);
-    Serial.print(" %, Temp_ext: ");
+    Serial.print("%, Temp ext: ");
     Serial.print(temp_ext);
-    Serial.print(" °C");
-    Serial.print(" %, Temp_ext_set: ");
+    Serial.print("°C, Temp extset: ");
     Serial.print(temp_ext_set);
-    Serial.print(" °C");
-  
-    //delay(1000); //Delay 2 sec.
-    
-    
+    Serial.print("°C, Cozir temp : ");
+    Serial.print(temp_cozir);
+    Serial.print("°C, Cozir hum : ");
+    Serial.print(hum_cozir);
+    Serial.print("%, Cozir CO2 : ");
+    Serial.print(c_cozir);
+    Serial.print("PPM, Cozir DF : ");
+    Serial.print(digi_cozir);
+      
     /**************************************************************
     * turn the temperature output pin on/off based on pid output
     ***************************************************************/
@@ -197,6 +222,3 @@ void loop()
   
   
 }
-
-   
-
