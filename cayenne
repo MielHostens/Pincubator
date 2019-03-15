@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+import cayenne.client
+import pynma
+import serial
+import time
+
+# Cayenne authentication info. This should be obtained from the Cayenne Dashboard.
+MQTT_USERNAME  = "8779fea0-1664-11e8-aeac-8375e928efd4"
+MQTT_PASSWORD  = "27e17f1b8837423563c52bc22872efc0a2107548"
+MQTT_CLIENT_ID = "a0a41de0-4033-11e8-a21e-7395420787ce"
+
+# The callback for when a message is received from Cayenne.
+def on_message(message):
+  print("message received: " + str(message))
+  # If there is an error processing the message return an error string, otherwise return nothing.
+
+client = cayenne.client.CayenneMQTTClient()
+client.on_message = on_message
+client.begin(MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID)
+# For a secure connection use port 8883 when calling client.begin:
+# client.begin(MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID, port=8883)
+
+i=0
+cayenne_timer = 0
+print_timer = 0
+setter_last_nan = 0
+
+# function to determine if decimals are decimals
+def is_number(s):
+	try:
+		float(s) # for int, long and float
+	except ValueError:
+		try:
+			complex(s) # for complex
+		except ValueError:
+			return False
+	return True
+
+ser = serial.Serial('/dev/ttyACM0', 9600)
+
+while True:
+  client.loop()
+  
+  read_serial=ser.readline().decode().strip('\r\n')
+  
+  stripped_serial = read_serial.split(";")
+  print(stripped_serial)
+  
+  if is_number(stripped_serial[0]):
+    setter_on_time = float(stripped_serial[0])/60000
+  else:
+    setter_on_time = 0.0
+
+  if is_number(stripped_serial[1]):
+    setter_time_turn = float(stripped_serial[1])/60000
+  else:
+    setter_time_turn = 0.0  
+
+  if is_number(stripped_serial[2]):
+    setter_output = float(stripped_serial[2])
+  else:
+    setter_output = 0
+
+  setter_humidity = float(stripped_serial[3])
+  setter_raw_temperature = float(stripped_serial[4])
+  setter_temperature_goal = float(stripped_serial[5])
+
+  setter_kp = float(stripped_serial[6])
+  setter_ki = float(stripped_serial[7])
+  setter_kd = float(stripped_serial[8])
+
+  hatcher_humidity = float(stripped_serial[9])
+  hatcher_raw_temperature = float(stripped_serial[10])
+  hatcher_ext_temperature = float(stripped_serial[11])
+  hatcher_ext_temperature_goal = float(stripped_serial[12])
+
+  hatcher_cozir_temperature = float(stripped_serial[13])
+  hatcher_cozir_humidity = float(stripped_serial[14])
+  hatcher_cozir_co2 = float(stripped_serial[15])
+  
+  setter_nan = int(stripped_serial[17])
+  hatcher_nan = int(stripped_serial[18])
+  setter_temperature = float(stripped_serial[19])
+  hatcher_temperature = float(stripped_serial[20])
+
+  if (time.time() > cayenne_timer + 30):
+    cayenne_timer = time.time()
+    client.virtualWrite(0, setter_on_time)
+    client.virtualWrite(1, setter_time_turn)
+    client.virtualWrite(2, int(setter_output))
+    client.celsiusWrite(3, setter_temperature)
+    client.virtualWrite(4, setter_humidity, "rel_hum", "p")
+    client.virtualWrite(5, setter_kp)
+    client.virtualWrite(6, setter_ki)
+    client.virtualWrite(7, setter_kd)
+    client.virtualWrite(8, hatcher_humidity, "rel_hum", "p")
+    client.celsiusWrite(9, hatcher_temperature)
+    client.celsiusWrite(10, hatcher_ext_temperature)
+    client.celsiusWrite(11, hatcher_ext_temperature_goal)
+    client.celsiusWrite(12, hatcher_cozir_temperature)
+    client.virtualWrite(13, hatcher_cozir_humidity, "rel_hum", "p")
+    client.virtualWrite(14, hatcher_cozir_co2, "co2", "ppm")
+    client.celsiusWrite(15, setter_raw_temperature)
+    client.celsiusWrite(16, hatcher_raw_temperature)
+    print("Data sent to Cayenne API")
+  
+  #regular print
+  if (time.time() > print_timer + 10):
+    print_timer = time.time()
+    print(stripped_serial)
+
