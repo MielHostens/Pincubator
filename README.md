@@ -31,6 +31,15 @@ The script can be found in the [arduino_incubator folder](./pincubator_v3_serial
 
 ### Raspberry pi
 
+#### Installation
+
+On install make sure to use this command to install libraries inside of the folder, cayenne otherwise fails
+
+```
+cd Pincubator
+sudo pip install paho-mqtt -t ./
+```
+
 [Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [serial_communication.py](/serial_communication.py)
 
 * The process connects to the serial readings of the Arduino via USB.
