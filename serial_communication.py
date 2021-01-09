@@ -236,6 +236,6 @@ if __name__ == '__main__':
             print
             "Error : try to parse an incomplete message"
         except:
-            writeSettings()
-            os.system("python serial_communication.py")
+            #writeSettings()
+            #os.system("python serial_communication.py")
         time.sleep(1)
