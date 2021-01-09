@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+import os
 import cayenne.client
 import serial
 import simplejson as json
@@ -236,4 +237,5 @@ if __name__ == '__main__':
             "Error : try to parse an incomplete message"
         except:
             writeSettings()
+            os.system("python serial_communication.py")
         time.sleep(1)
