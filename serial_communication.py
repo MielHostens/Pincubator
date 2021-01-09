@@ -215,7 +215,8 @@ if __name__ == '__main__':
             ser.flush()
             buffer = ser.readline()
             print(buffer)
-            data_incubator = json.loads(buffer)
+            if buffer != b'':
+                data_incubator = json.loads(buffer)
             pushData(data_incubator)
             if int(settings["PushOnOff"]) == 199:
                 print("Push notifications Off")
@@ -233,4 +234,6 @@ if __name__ == '__main__':
         except json.JSONDecodeError:
             print
             "Error : try to parse an incomplete message"
+        except:
+            writeSettings()
         time.sleep(1)
