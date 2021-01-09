@@ -199,7 +199,7 @@ if __name__ == '__main__':
     client.begin(MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID)
 
     # Start serial port
-    ser = serial.Serial('COM7', 9600, timeout=1)
+    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
     ser.flush()
     buffer = ""
 
