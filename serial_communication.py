@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     # The callback for when a message is received from Cayenne.
     def on_message(message):
-        print("message received: " + str(message))
+        #print("message received: " + str(message))
         switcher = {
             SetterOnOffChannel: updateSetterOnOff,
             HatcherOnOffChannel: updateHatcherOnOff,
@@ -199,7 +199,9 @@ if __name__ == '__main__':
     client.begin(MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID)
 
     # Start serial port
+    # ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+
     ser.flush()
     buffer = ""
 
@@ -211,6 +213,7 @@ if __name__ == '__main__':
 
     while True:
         try:
+            #client.loop()
             data_out_json = json.dumps(settings)
             ser.write(data_out_json.encode('ascii'))
             ser.flush()
@@ -218,24 +221,18 @@ if __name__ == '__main__':
             print(buffer)
             if buffer != b'':
                 data_incubator = json.loads(buffer)
-            pushData(data_incubator)
-            if int(settings["PushOnOff"]) == 199:
-                print("Push notifications Off")
-            else:
-                print("Push notifications On")
-                interval = int(settings["PushOnOff"])
-                if int(settings["SetterOnOff"]) == 1:
-                    print("Checking setter")
-                    checkSetter(data_incubator, interval*60)
-                if int(settings["HatcherOnOff"]) == 1:
-                    print("Checking hatcher")
-                    checkHatcher(data_incubator, interval*60)
-            client.loop()
-
+                pushData(data_incubator)
+                if int(settings["PushOnOff"]) == 199:
+                    print("Push notifications Off")
+                else:
+                    print("Push notifications On")
+                    interval = int(settings["PushOnOff"])
+                    if int(settings["SetterOnOff"]) == 1:
+                        print("Checking setter")
+                        checkSetter(data_incubator, interval*60)
+                    if int(settings["HatcherOnOff"]) == 1:
+                        print("Checking hatcher")
+                        checkHatcher(data_incubator, interval*60)
         except json.JSONDecodeError:
-            print
-            "Error : try to parse an incomplete message"
-        except:
-            #writeSettings()
-            #os.system("python serial_communication.py")
-        time.sleep(1)
+            print("Error : try to parse an incomplete message")
+        time.sleep(10)
