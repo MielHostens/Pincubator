@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     while True:
         try:
-            client.loop()
+
             data_out_json = json.dumps(settings)
             ser.write(data_out_json.encode('ascii'))
             ser.flush()
@@ -233,6 +233,7 @@ if __name__ == '__main__':
                     if int(settings["HatcherOnOff"]) == 1:
                         print("Checking hatcher")
                         checkHatcher(data_incubator, interval*60)
+                client.loop()
         except json.JSONDecodeError:
             print("Error : try to parse an incomplete message")
         time.sleep(10)
