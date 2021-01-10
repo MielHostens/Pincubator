@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     while True:
         try:
-            #client.loop()
+            client.loop()
             data_out_json = json.dumps(settings)
             ser.write(data_out_json.encode('ascii'))
             ser.flush()
