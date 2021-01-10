@@ -40,7 +40,7 @@ cd Pincubator
 sudo pip install paho-mqtt -t ./
 ```
 
-[Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [serial_communication.py](/serial_communication.py)
+[Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [serial_communication.py](/run.py)
 
 * The process connects to the serial readings of the Arduino via USB.
 * Values are send to [Cayenne cloud](https://cayenne.mydevices.com/) to monitor the values over time
