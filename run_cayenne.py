@@ -4,7 +4,7 @@ import os
 import cayenne.client
 import serial
 import simplejson as json
-from pypush import start_message, alert_message
+
 
 if __name__ == '__main__':
 
@@ -21,11 +21,11 @@ if __name__ == '__main__':
     PushOnOffChannel = 3
     SetterWindowChannel = 4
     HatcherWindowChannel = 5
-    SetterTemperatureChannel = 6
-    SetterHumidityChannel = 7
-    SetterCozirTemperatureChannel = 8
-    SetterCozirHumidityChannel = 9
-    SetterCozirCO2Channel = 10
+    SetterDHTTemperatureChannel = 6
+    SetterDHTHumidityChannel = 7
+    SetterSCD30TemperatureChannel = 8
+    SetterSCD30HumidityChannel = 9
+    SetterSCD30CO2Channel = 10
     HatcherTemperatureChannel = 11
     HatcherHumidityChannel = 12
     HatcherCozirTemperatureChannel = 13
@@ -41,6 +41,11 @@ if __name__ == '__main__':
     HatcherKpChannel = 30
     HatcherKiChannel = 31
     HatcherKdChannel = 32
+    SetterDS1TemperatureChannel = 40
+    SetterDS2TemperatureChannel = 41
+    HatcherExtDSTemperatureChannel = 42
+    HatcherIntDSTemperatureChannel = 43
+
 
     # The callback for when a message is received from Cayenne.
     def on_message(message):
@@ -127,23 +132,25 @@ if __name__ == '__main__':
         client.virtualWrite(HatcherPIDOnOffChannel, data_in["HatcherPIDOnOff"])
         client.virtualWrite(SetterManualOnOffChannel, data_in["SetterManualOnOff"])
         client.virtualWrite(HatcherManualOnOffChannel, data_in["HatcherManualOnOff"])
-        client.virtualWrite(SetterTemperatureChannel, data_in["SetterTempAverage"])
-        client.virtualWrite(SetterHumidityChannel, data_in["SetterHumidity"])
-        client.virtualWrite(SetterCozirTemperatureChannel, data_in["SetterCozirTemperature"])
-        client.virtualWrite(SetterCozirHumidityChannel, data_in["SetterCozirHumidity"])
-        client.virtualWrite(SetterCozirCO2Channel, data_in["SetterCozirCO2"])
-        client.virtualWrite(HatcherTemperatureChannel, data_in["HatcherIntTempAverage"])
-        client.virtualWrite(HatcherHumidityChannel, data_in["HatcherIntHumidity"])
+        client.virtualWrite(SetterDHTTemperatureChannel, data_in["SetterDHTTempAverage"])
+        client.virtualWrite(SetterDHTHumidityChannel, data_in["SetterDHTHumidity"])
+        client.virtualWrite(SetterSCD30TemperatureChannel, data_in["SetterSCD30Temperature"])
+        client.virtualWrite(SetterSCD30HumidityChannel, data_in["SetterSCD30Humidity"])
+        client.virtualWrite(SetterSCD30CO2Channel, data_in["SetterSCD30CO2"])
+        client.virtualWrite(SetterDS1TemperatureChannel, data_in["SetterDS1Temperature"])
+        client.virtualWrite(SetterDS2TemperatureChannel, data_in["SetterDS2Temperature"])
+        client.virtualWrite(HatcherTemperatureChannel, data_in["HatcherIntDHTTempAverage"])
+        client.virtualWrite(HatcherHumidityChannel, data_in["HatcherIntDHTHumidity"])
         client.virtualWrite(HatcherCozirTemperatureChannel, data_in["HatcherCozirTemperature"])
         client.virtualWrite(HatcherCozirHumidityChannel, data_in["HatcherCozirHumidity"])
         client.virtualWrite(HatcherCozirCO2Channel, data_in["HatcherCozirCO2"])
+        client.virtualWrite(HatcherIntDSTemperatureChannel, data_in["HatcherIntDSTemperature"])
         client.virtualWrite(SetterKpChannel, data_in["SetterKp"])
         client.virtualWrite(SetterKiChannel, data_in["SetterKi"])
         client.virtualWrite(SetterKdChannel, data_in["SetterKp"])
         client.virtualWrite(HatcherKpChannel, data_in["HatcherKp"])
         client.virtualWrite(HatcherKiChannel, data_in["HatcherKi"])
         client.virtualWrite(HatcherKdChannel, data_in["HatcherKd"])
-
 
     def checkSetter(data, interval):
         global setterCheckTime
@@ -200,8 +207,9 @@ if __name__ == '__main__':
 
     # Start serial port
     # ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-
+    # ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    ser = serial.Serial('COM7')
+    # ser.reset_input_buffer()
     ser.flush()
     buffer = ""
 
