@@ -7,7 +7,7 @@ import logging
 import pickle
 import sys
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
     raise ValueError('Please provide serial bus and localhost')
 
 logging.basicConfig(level=logging.DEBUG,
