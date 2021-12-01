@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import time
 from pySerialTransfer import pySerialTransfer as txfer
-import simplejson as json
 from pypush import start_message, alert_message
 from tb_gateway_mqtt import TBDeviceMqttClient
 import logging
