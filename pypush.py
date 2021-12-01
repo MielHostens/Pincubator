@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from pushsafer import *
+from pushsafer import Client
 
 def  alert_message(message):
     Client("gHIXO4mnMUAcsKfTJieY").send_message(message=message,
