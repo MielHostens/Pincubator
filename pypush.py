@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 from pushsafer import *
 
-init("gHIXO4mnMUAcsKfTJieY")
-
 def  alert_message(message):
-    Client("").send_message(message=message,
+    Client("gHIXO4mnMUAcsKfTJieY").send_message(message=message,
                             title="Pincubator ALERT",
                             device="a",  # all
                             sound="0",  # empty default otherwise 0-62
@@ -22,7 +20,7 @@ def  alert_message(message):
                             answer=0)
 
 def  start_message():
-    Client("").send_message(message="Pincubator started",
+    Client("gHIXO4mnMUAcsKfTJieY").send_message(message="Pincubator started",
                             title="Setup finished",
                             device="a",  # all
                             sound="8",  # empty default otherwise 0-62
