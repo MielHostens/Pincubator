@@ -7,9 +7,6 @@ import logging
 import pickle
 import sys
 
-if len(sys.argv) != 3:
-    raise ValueError('Please provide serial bus and localhost')
-
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -182,8 +179,8 @@ def dict_clean(items):
 def main():
 
     try:
-        port = sys.argv[1]
-        host= sys.argv[2]
+        port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
+        host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
         client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
