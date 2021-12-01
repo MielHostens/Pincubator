@@ -267,8 +267,10 @@ void SerialSendReceive(int interval) {
   if (millis() - LastSerialPush >= interval)
   {
     LastSerialPush = millis();
+    String payload;
+    while ( !Serial.available()){}
     if (Serial.available() > 0) {
-      String payload = Serial.readStringUntil( '\n' );
+      payload = Serial.readStringUntil( '\n' );
       DeserializationError error = deserializeJson(InDoc, payload);
       if (error) {
         //Serial.println(error.c_str());
