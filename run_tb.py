@@ -198,7 +198,7 @@ def main():
         time.sleep(5)
 
         # Finish by sending message
-        start_message()
+        # start_message()
 
         # Read last saved settings
         structSettingsTX = readSettings()
