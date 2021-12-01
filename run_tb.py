@@ -5,6 +5,10 @@ from pypush import start_message, alert_message
 from tb_gateway_mqtt import TBDeviceMqttClient
 import logging
 import pickle
+import sys
+
+if len(sys.argv) != 1:
+    raise ValueError('Please provide serial bus')
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
@@ -178,7 +182,9 @@ def dict_clean(items):
 def main():
 
     try:
-        client = TBDeviceMqttClient("192.168.0.111", "MetUfDYMrXno9RKiiGl7")
+        port = sys.argv[1]
+        host= sys.argv[2]
+        client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
 
@@ -186,7 +192,7 @@ def main():
         setterCheckTime = time.time()
         hatcherCheckTime = time.time()
 
-        link = txfer.SerialTransfer('COM7')
+        link = txfer.SerialTransfer(port)
 
         link.open()
         time.sleep(5)
