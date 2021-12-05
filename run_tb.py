@@ -7,16 +7,18 @@ import logging
 import pickle
 import sys
 
+pushTimer = time.time()
+
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 class structSettingsTX(object):
-    SetterOnOff = 0
+    SetterOnOff = 1
     HatcherOnOff = 0
     SetterPIDOnOff = 0
     HatcherPIDOnOff = 0
-    SetterManualOnOff = 0
+    SetterManualOnOff = 1
     HatcherManualOnOff = 0
     SetterKp = 0.0
     SetterKi = 0.0
@@ -24,7 +26,7 @@ class structSettingsTX(object):
     HatcherKp = 0.0
     HatcherKi = 0.0
     HatcherKd = 0.0
-    SetterTempWindow = 1000.0
+    SetterTempWindow = 5000.0
     HatcherTempWindow = 2000.0
 
 
@@ -86,43 +88,46 @@ def updateSettings(key, value):
         logging.info(msg="Settings for " + str(key) + " to value: " + str(value))
     writeSettings(structSettingsTX)
 
-def pushData(client):
-    client.request_attributes()
-    client.send_telemetry(
-                            {"ts": int(round(time.time() * 1000)),
-                              "values": {
-                                  "SetterOnOff": structSettingsRX.SetterOnOff,
-                                  "SetterTempWindow":structSettingsRX.SetterTempWindow,
-                                  "SetterWindow": structSettingsRX.SetterWindow,
-                                  "SetterPIDOnOff": structSettingsRX.SetterPIDOnOff,
-                                  "SetterManualOnOff": structSettingsRX.SetterManualOnOff,
-                                  "Setter Temperature DHT22": structSettingsRX.SetterDHTTempAverage,
-                                  "Setter Humidity DHT22": structSettingsRX.SetterDHTHumidity,
-                                  "Setter Temperature SCD30": structSettingsRX.SetterSCD30Temperature,
-                                  "Setter Humidity SCD30": structSettingsRX.SetterSCD30Humidity,
-                                  "Setter CO2 SCD30": structSettingsRX.SetterSCD30CO2,
-                                  "Setter Temperature DS18 1": structSettingsRX.SetterDS1Temperature,
-                                  "Setter Temperature DS18 2": structSettingsRX.SetterDS2Temperature,
-                                  "Setter Kp": structSettingsRX.SetterKp,
-                                  "Setter Ki": structSettingsRX.SetterKi,
-                                  "Setter Kd": structSettingsRX.SetterKd,
-                                  "HatcherOnOff": structSettingsRX.HatcherOnOff,
-                                  "HatcherTempWindow":structSettingsRX.HatcherTempWindow,
-                                  "HatcherWindow": structSettingsRX.HatcherWindow,
-                                  "HatcherPIDOnOff": structSettingsRX.HatcherPIDOnOff,
-                                  "HatcherManualOnOff":structSettingsRX.HatcherManualOnOff,
-                                  "Hatcher Temperature DHT22": structSettingsRX.HatcherIntDHTTempAverage,
-                                  "Hatcher Humidity DHT22": structSettingsRX.HatcherIntDHTHumidity,
-                                  "Hatcher Temperature COZIR": structSettingsRX.HatcherCozirTemperature,
-                                  "Hatcher Humidity COZIR": structSettingsRX.HatcherCozirHumidity,
-                                  "Hatcher CO2 COZIR": structSettingsRX.HatcherCozirCO2,
-                                  "Hatcher Temperature DS18": structSettingsRX.HatcherIntDSTemperature,
-                                  "Hatcher Kp": structSettingsRX.HatcherKp,
-                                  "Hatcher Ki": structSettingsRX.HatcherKi,
-                                  "Hatcher Kd": structSettingsRX.HatcherKd
+def pushData(client, timer):
+    global pushTimer
+    if (time.time() - pushTimer > timer):
+        pushTimer = time.time()
+        client.request_attributes()
+        client.send_telemetry(
+                                {"ts": int(round(time.time() * 1000)),
+                                  "values": {
+                                      "SetterOnOff": structSettingsRX.SetterOnOff,
+                                      "SetterTempWindow":structSettingsRX.SetterTempWindow,
+                                      "SetterWindow": structSettingsRX.SetterWindow,
+                                      "SetterPIDOnOff": structSettingsRX.SetterPIDOnOff,
+                                      "SetterManualOnOff": structSettingsRX.SetterManualOnOff,
+                                      "Setter Temperature DHT22": structSettingsRX.SetterDHTTempAverage,
+                                      "Setter Humidity DHT22": structSettingsRX.SetterDHTHumidity,
+                                      "Setter Temperature SCD30": structSettingsRX.SetterSCD30Temperature,
+                                      "Setter Humidity SCD30": structSettingsRX.SetterSCD30Humidity,
+                                      "Setter CO2 SCD30": structSettingsRX.SetterSCD30CO2,
+                                      "Setter Temperature DS18 1": structSettingsRX.SetterDS1Temperature,
+                                      "Setter Temperature DS18 2": structSettingsRX.SetterDS2Temperature,
+                                      "Setter Kp": structSettingsRX.SetterKp,
+                                      "Setter Ki": structSettingsRX.SetterKi,
+                                      "Setter Kd": structSettingsRX.SetterKd,
+                                      "HatcherOnOff": structSettingsRX.HatcherOnOff,
+                                      "HatcherTempWindow":structSettingsRX.HatcherTempWindow,
+                                      "HatcherWindow": structSettingsRX.HatcherWindow,
+                                      "HatcherPIDOnOff": structSettingsRX.HatcherPIDOnOff,
+                                      "HatcherManualOnOff":structSettingsRX.HatcherManualOnOff,
+                                      "Hatcher Temperature DHT22": structSettingsRX.HatcherIntDHTTempAverage,
+                                      "Hatcher Humidity DHT22": structSettingsRX.HatcherIntDHTHumidity,
+                                      "Hatcher Temperature COZIR": structSettingsRX.HatcherCozirTemperature,
+                                      "Hatcher Humidity COZIR": structSettingsRX.HatcherCozirHumidity,
+                                      "Hatcher CO2 COZIR": structSettingsRX.HatcherCozirCO2,
+                                      "Hatcher Temperature DS18": structSettingsRX.HatcherIntDSTemperature,
+                                      "Hatcher Kp": structSettingsRX.HatcherKp,
+                                      "Hatcher Ki": structSettingsRX.HatcherKi,
+                                      "Hatcher Kd": structSettingsRX.HatcherKd
+                                    }
                                 }
-                            }
-                        )
+                            )
 
 def checkSetter(data, interval):
     global setterCheckTime
@@ -185,14 +190,11 @@ def main():
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
 
-        # Timers
-        setterCheckTime = time.time()
-        hatcherCheckTime = time.time()
 
         link = txfer.SerialTransfer(port)
-
         link.open()
-        time.sleep(5)
+
+        time.sleep(2)
 
         # Finish by sending message
         # start_message()
@@ -308,7 +310,7 @@ def main():
                 structSettingsRX.HatcherCozirCO2 = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client=client)
+                pushData(client = client, timer=10)
                 logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
                     structSettingsRX.SetterOnOff,
                     structSettingsRX.HatcherOnOff,
