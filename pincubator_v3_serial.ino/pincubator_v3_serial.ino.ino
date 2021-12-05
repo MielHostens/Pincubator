@@ -2,7 +2,6 @@
 #include "cozir.h"
 #include "SoftwareSerial.h"
 #include "PID_v1.h"
-#include "ArduinoJson.h"
 
 #define VCSetterOnOff 1
 #define VCHatcherOnOff 2
