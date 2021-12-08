@@ -35,7 +35,7 @@
 #define RelayON 0 // Constants for Arduino relay board
 #define RelayOFF 1
 bool Debug = false;
-bool Simulator = true;
+bool Simulator = false;
 int ledState = LOW;
 int BlinkerSpeed; //Blinker speed
 
@@ -144,7 +144,7 @@ struct STRUCTRX {
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 2500.0;
+  double SetterTempWindow = 250.0;
   double HatcherTempWindow = 0.0;
 } settingsStructRX;
 
@@ -161,8 +161,10 @@ struct STRUCT {
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 2500.0;
-  double HatcherTempWindow = 2500.0;
+  double SetterTempWindow = 250.0;
+  double HatcherTempWindow = 0.0;
+  double SetterPIDWindow = 0.0;
+  double HatcherPIDWindow = 0.0;
   double SetterWindow = 0.0;
   double HatcherWindow = 0.0;
   double SetterDHTTempAverage = 0.0;
@@ -198,7 +200,7 @@ double HatcherExtDSTemperature; //Stores external temperature value
 //Specify the links and initial tuning parameters
 PID mySetterPID(
   &settingsStruct.SetterDHTTempAverage, 
-  &settingsStruct.SetterWindow, 
+  &settingsStruct.SetterPIDWindow, 
   &SetterTargetTemperature, 
   settingsStruct.SetterKp, 
   settingsStruct.SetterKi, 
@@ -206,7 +208,7 @@ PID mySetterPID(
   DIRECT);
 PID myHatcherPID(
   &settingsStruct.HatcherIntDHTTempAverage, 
-  &settingsStruct.HatcherWindow, 
+  &settingsStruct.HatcherPIDWindow, 
   &HatcherTargetIntTemperature, 
   settingsStruct.HatcherKp, 
   settingsStruct.HatcherKi, 
@@ -266,10 +268,11 @@ void setup()
   // * PID
   // ***************************************************************/
   mySetterPID.SetMode(AUTOMATIC);
-  mySetterPID.SetOutputLimits(300, 1000);
+  mySetterPID.SetOutputLimits(100, 1000);
+  mySetterPID.SetSampleTime(60000);
   myHatcherPID.SetMode(AUTOMATIC);
-  myHatcherPID.SetOutputLimits(300, 1000);
-  //myPID.SetSampleTime(60000);
+  myHatcherPID.SetOutputLimits(100, 1000);
+  myHatcherPID.SetSampleTime(60000);
 
   // **************************************************************
   // * SMOOTHERS
@@ -379,20 +382,63 @@ void SerialSend(int interval) {
 
 void SetterOn() {
   SetterReadSensors(10000); // every 10 seconds
+  SetterPID();
   if (settingsStruct.SetterManualOnOff == 1) {
-    SetterManualMode();  
+    SetterManualMode();
     } 
-  else {
-    if (settingsStruct.SetterPIDOnOff == 0) {
-      SetterAutomaticMode(60000, false);
-      } 
-    else {
-      SetterAutomaticMode(60000, true);  
-      }
-  }
+  else if (settingsStruct.SetterManualOnOff == 0 && settingsStruct.SetterPIDOnOff == 0) {
+    SetterAutomaticMode(60000, false);
+    } 
+  else if (settingsStruct.SetterManualOnOff == 0 && settingsStruct.SetterPIDOnOff == 1) {
+    SetterAutomaticMode(60000, true);  
+    }
   SetterPWM(10000);
   SetterEggTurn(3600000); //every hour
 }
+
+void SetterPID() {
+  mySetterPID.SetTunings(settingsStruct.SetterKp, settingsStruct.SetterKi, settingsStruct.SetterKd);
+  mySetterPID.Compute();
+}
+void SetterManualMode() {
+  settingsStruct.SetterWindow = settingsStruct.SetterTempWindow;
+}
+void SetterAutomaticMode(int interval, bool PID) {
+  //Compute output with or without PID
+  if (millis() - SetterTemperatureTargetTimer >= interval)
+  { //time to shift the Relay Window
+    SetterTemperatureTargetTimer = millis();
+    if (PID) {
+      SetterPIDAdjustTemperatureWindow();
+    }
+    else {
+      SetterStepAdjustTemperatureWindow();
+    }
+  }
+}
+void SetterPIDAdjustTemperatureWindow() {
+  settingsStruct.SetterWindow = settingsStruct.SetterPIDWindow;
+}
+
+void SetterStepAdjustTemperatureWindow() {
+  if ((settingsStruct.SetterDHTTempAverage > (SetterTargetTemperature + 0.15)))
+  {
+    settingsStruct.SetterWindow -= 20.0;
+  }
+  else if ((settingsStruct.SetterDHTTempAverage > (SetterTargetTemperature + 0.1)))
+  {
+    settingsStruct.SetterWindow -= 10.0;
+  }
+  else if (settingsStruct.SetterDHTTempAverage < (SetterTargetTemperature - 0.2))
+  {
+    settingsStruct.SetterWindow += 10.0;
+  }
+  else if (settingsStruct.SetterDHTTempAverage < (SetterTargetTemperature - 0.1))
+  {
+    settingsStruct.SetterWindow += 5.0;
+  }
+}
+
 void SetterOff() {
   //SHUT DOWN HATCHER ENTIRELY
   digitalWrite(SetterPinSSRTemperature, LOW);
@@ -462,44 +508,8 @@ void SetterEggTurn(int interval) {
     digitalWrite(SetterPinRelayEggTurner, RelayOFF);
   }
 }
-void SetterManualMode() {
-  settingsStruct.SetterWindow = settingsStruct.SetterTempWindow;
-}
-void SetterAutomaticMode(int interval, bool PID) {
-  //Compute output with or without PID
-  if (millis() - SetterTemperatureTargetTimer >= interval)
-  { //time to shift the Relay Window
-    SetterTemperatureTargetTimer = millis();
-    if (PID) {
-      SetterPIDAdjustTemperatureTarget();
-    }
-    else {
-      SetterStepAdjustTemperatureTarget();
-    }
-  }
-}
-void SetterPIDAdjustTemperatureTarget() {
-  mySetterPID.SetTunings(settingsStruct.SetterKp, settingsStruct.SetterKi, settingsStruct.SetterKd);
-  mySetterPID.Compute();
-}
-void SetterStepAdjustTemperatureTarget() {
-  if ((settingsStruct.SetterDHTTempAverage > (SetterTargetTemperature + 0.15)) && settingsStruct.SetterWindow > 300.0)
-  {
-    settingsStruct.SetterWindow -= 20.0;
-  }
-  else if ((settingsStruct.SetterDHTTempAverage > (SetterTargetTemperature + 0.1)) && settingsStruct.SetterWindow > 300.0)
-  {
-    settingsStruct.SetterWindow -= 10.0;
-  }
-  else if (settingsStruct.SetterDHTTempAverage < (SetterTargetTemperature - 0.2) && settingsStruct.SetterWindow < 700.0)
-  {
-    settingsStruct.SetterWindow += 10.0;
-  }
-  else if (settingsStruct.SetterDHTTempAverage < (SetterTargetTemperature - 0.1) && settingsStruct.SetterWindow < 700.0)
-  {
-    settingsStruct.SetterWindow += 5.0;
-  }
-}
+
+
 void SetterPWM(int interval) {
   if (millis() - SetterWindowTimer >= interval)
   { //time to shift the Relay Window

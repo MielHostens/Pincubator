@@ -26,8 +26,8 @@ class structSettingsTX(object):
     HatcherKp = 0.0
     HatcherKi = 0.0
     HatcherKd = 0.0
-    SetterTempWindow = 5000.0
-    HatcherTempWindow = 2000.0
+    SetterTempWindow = 250.0
+    HatcherTempWindow = 250.0
 
 
 def writeSettings(object_to_save):
@@ -55,6 +55,8 @@ class structSettingsRX(object):
     HatcherKd = 0.0
     SetterTempWindow = 0.0
     HatcherTempWindow = 0.0
+    SetterPIDWindow = 0.0
+    HatcherPIDWindow = 0.0
     SetterWindow = 0.0
     HatcherWindow = 0.0
     SetterDHTTempAverage = 0.0
@@ -98,6 +100,7 @@ def pushData(client, timer):
                                   "values": {
                                       "SetterOnOff": structSettingsRX.SetterOnOff,
                                       "SetterTempWindow":structSettingsRX.SetterTempWindow,
+                                      "SetterPIDWindow": structSettingsRX.SetterPIDWindow,
                                       "SetterWindow": structSettingsRX.SetterWindow,
                                       "SetterPIDOnOff": structSettingsRX.SetterPIDOnOff,
                                       "SetterManualOnOff": structSettingsRX.SetterManualOnOff,
@@ -113,6 +116,7 @@ def pushData(client, timer):
                                       "Setter Kd": structSettingsRX.SetterKd,
                                       "HatcherOnOff": structSettingsRX.HatcherOnOff,
                                       "HatcherTempWindow":structSettingsRX.HatcherTempWindow,
+                                      "HatcherPIDWindow": structSettingsRX.HatcherPIDWindow,
                                       "HatcherWindow": structSettingsRX.HatcherWindow,
                                       "HatcherPIDOnOff": structSettingsRX.HatcherPIDOnOff,
                                       "HatcherManualOnOff":structSettingsRX.HatcherManualOnOff,
@@ -265,6 +269,12 @@ def main():
                 structSettingsRX.HatcherTempWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
+                structSettingsRX.SetterPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
+
+                structSettingsRX.HatcherPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
+
                 structSettingsRX.SetterWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
@@ -310,7 +320,7 @@ def main():
                 structSettingsRX.HatcherCozirCO2 = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=10)
+                pushData(client = client, timer=60)
                 logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
                     structSettingsRX.SetterOnOff,
                     structSettingsRX.HatcherOnOff,
