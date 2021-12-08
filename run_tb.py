@@ -320,7 +320,7 @@ def main():
                 structSettingsRX.HatcherCozirCO2 = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=60)
+                pushData(client = client, timer=300)
                 logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
                     structSettingsRX.SetterOnOff,
                     structSettingsRX.HatcherOnOff,
