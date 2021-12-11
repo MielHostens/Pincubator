@@ -151,9 +151,9 @@ struct STRUCTRX {
 struct STRUCT {
   byte SetterOnOff = 1;
   byte HatcherOnOff = 0;
-  byte SetterPIDOnOff = 0;
+  byte SetterPIDOnOff = 1;
   byte HatcherPIDOnOff = 0;
-  byte SetterManualOnOff = 1;
+  byte SetterManualOnOff = 0;
   byte HatcherManualOnOff = 0;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
@@ -308,7 +308,7 @@ void loop()
   if (settingsStruct.HatcherOnOff == 0) HatcherOff(); else HatcherOn();
 }
 
-void SerialRxTx(int interval) {
+void SerialRxTx(unsigned long interval) {
   if (millis() - RxTxTimer >= interval && myTransfer.available()){
     RxTxTimer = millis();  
     {
@@ -341,7 +341,7 @@ void UpdateRXtoTX() {
   settingsStruct.HatcherTempWindow = settingsStructRX.HatcherTempWindow;
   }
 
-void SerialSend(int interval) {
+void SerialSend(unsigned long interval) {
   //Read all sensors in the setter
   if (millis() - RxTxTimer >= interval){
     RxTxTimer = millis();
@@ -403,19 +403,22 @@ void SetterPID() {
 void SetterManualMode() {
   settingsStruct.SetterWindow = settingsStruct.SetterTempWindow;
 }
-void SetterAutomaticMode(int interval, bool PID) {
+void SetterAutomaticMode(unsigned long interval, bool PID) {
   //Compute output with or without PID
-  if (millis() - SetterTemperatureTargetTimer >= interval)
-  { //time to shift the Relay Window
+  if ((millis() - SetterTemperatureTargetTimer >= interval) && (PID == true)) { 
+    //time to shift the Relay Window
+    if (Debug) Serial.println("PID ADJUST SETTER WINDOW");
     SetterTemperatureTargetTimer = millis();
-    if (PID) {
-      SetterPIDAdjustTemperatureWindow();
-    }
-    else {
-      SetterStepAdjustTemperatureWindow();
-    }
+    SetterPIDAdjustTemperatureWindow();
+  } 
+  else if ((millis() - SetterTemperatureTargetTimer >= interval) && (PID == false)) {
+    //time to shift the Relay Window
+    if (Debug) Serial.println("STEP ADJUST SETTER WINDOW");
+    SetterTemperatureTargetTimer = millis();
+    SetterStepAdjustTemperatureWindow();
   }
 }
+
 void SetterPIDAdjustTemperatureWindow() {
   settingsStruct.SetterWindow = settingsStruct.SetterPIDWindow;
 }
@@ -443,7 +446,7 @@ void SetterOff() {
   //SHUT DOWN HATCHER ENTIRELY
   digitalWrite(SetterPinSSRTemperature, LOW);
 }
-void SetterReadSensors(int interval) {
+void SetterReadSensors(unsigned long interval) {
   //Read all sensors in the setter
   if (millis() - SetterSensorTimer >= interval)
   {
@@ -495,7 +498,7 @@ void SetterReadSensors(int interval) {
   }
 }
 
-void SetterEggTurn(int interval) {
+void SetterEggTurn(unsigned long interval) {
   /************************************************
     SETTER TURNING
   ************************************************/
@@ -510,7 +513,7 @@ void SetterEggTurn(int interval) {
 }
 
 
-void SetterPWM(int interval) {
+void SetterPWM(unsigned long interval) {
   if (millis() - SetterWindowTimer >= interval)
   { //time to shift the Relay Window
     if (Debug) Serial.println("Checking setter window");
@@ -535,7 +538,7 @@ void HatcherOff() {
   digitalWrite(HatcherPinRelayHumidity, RelayOFF);
   digitalWrite(HatcherPinSSRTemperature, LOW);
 }
-void HatcherReadSensors(int interval) {
+void HatcherReadSensors(unsigned long interval) {
   //Read all sensors in the setter
   if (millis() - HatcherSensorTimer >= interval)
   {
@@ -619,7 +622,7 @@ void HatcherHumidityCheck() {
   if (settingsStruct.HatcherIntDHTHumidity > HatcherTargetIntHumidity + 5.0) digitalWrite(HatcherPinRelayHumidity, RelayOFF);
   else if (settingsStruct.HatcherIntDHTHumidity < HatcherTargetIntHumidity - 5.0) digitalWrite(HatcherPinRelayHumidity, RelayON);
 }
-void HatcherAutomaticMode(int interval, bool PID) {
+void HatcherAutomaticMode(unsigned long interval, bool PID) {
   //Compute output with or without PID
   if (millis() - HatcherTemperatureTargetTimer >= interval)
   { //time to shift the Relay Window
@@ -636,7 +639,7 @@ void HatcherPIDAdjustTemperatureTarget() {
   myHatcherPID.SetTunings(settingsStruct.HatcherKp, settingsStruct.HatcherKi, settingsStruct.HatcherKd);
   myHatcherPID.Compute();
 }
-void HatcherStepAdjustTemperatureTarget(int interval) {
+void HatcherStepAdjustTemperatureTarget(unsigned long interval) {
   /************************************************
     HATCHER SETPOINT ADJUSTMENT
   ************************************************/
@@ -647,7 +650,7 @@ void HatcherStepAdjustTemperatureTarget(int interval) {
     else if (HatcherIntDHTTemperature < HatcherTargetIntTemperature - 0.3) HatcherTargetExtTemperature += 0.1;
   }
 }
-void HatcherPWM(int interval) {
+void HatcherPWM(unsigned long interval) {
   //Turn the output pin on/off based on pid output
   //Pot value to adjust the sensor settings
   if (millis() - HatcherWindowTimer >= interval)
