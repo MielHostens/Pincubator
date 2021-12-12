@@ -90,9 +90,9 @@ int HatcherTargetCO2 = 5000;
 // Error counters
 // ************************************************
 //Keeping track of number of erroneous readings
-long SetterDHTErrorCount = 0;
-long HatcherExtDHTErrorCount = 0;
-long HatcherIntDHTErrorCount = 0;
+unsigned long SetterDHTErrorCount = 0;
+unsigned long HatcherExtDHTErrorCount = 0;
+unsigned long HatcherIntDHTErrorCount = 0;
 
 // ************************************************
 // Smoothers
@@ -118,50 +118,42 @@ double HatcherIntDHTTempAverage = 0.0;                // the average
 // Timers
 // ************************************************
 unsigned long SetterSensorTimer = 2500;
-unsigned long SetterTemperatureTargetTimer = 4500;
+unsigned long SetterTemperatureTargetTimer = 0;
 unsigned long SetterWindowTimer = 5000;
 unsigned long SetterEggTurnTimer = 0;
 unsigned long HatcherSensorTimer = 2500;
-unsigned long HatcherTemperatureTargetTimer = 4500;
+unsigned long HatcherTemperatureTargetTimer = 0;
 unsigned long HatcherWindowTimer = 5000;
 unsigned long BlinkerTimer = 0;
-unsigned long RxTxTimer = 30000;
+unsigned long RxTxTimer = 28000;
 
 // **************************************************************
 // * RX TX
 // **************************************************************
 
 struct STRUCTRX {
-  byte SetterOnOff = 1;
-  byte HatcherOnOff = 0;
-  byte SetterPIDOnOff = 0;
-  byte HatcherPIDOnOff = 0;
-  byte SetterManualOnOff = 1;
-  byte HatcherManualOnOff = 0;
+  byte SetterMode = 0;
+  byte HatcherMode = 0;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 250.0;
+  double SetterTempWindow = 0.0;
   double HatcherTempWindow = 0.0;
 } settingsStructRX;
 
 struct STRUCT {
-  byte SetterOnOff = 1;
-  byte HatcherOnOff = 0;
-  byte SetterPIDOnOff = 1;
-  byte HatcherPIDOnOff = 0;
-  byte SetterManualOnOff = 0;
-  byte HatcherManualOnOff = 0;
+  byte SetterMode = 0;
+  byte HatcherMode = 0;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 250.0;
+  double SetterTempWindow = 0.0;
   double HatcherTempWindow = 0.0;
   double SetterPIDWindow = 0.0;
   double HatcherPIDWindow = 0.0;
@@ -268,10 +260,10 @@ void setup()
   // * PID
   // ***************************************************************/
   mySetterPID.SetMode(AUTOMATIC);
-  mySetterPID.SetOutputLimits(100, 1000);
+  mySetterPID.SetOutputLimits(100, 9000);
   mySetterPID.SetSampleTime(60000);
   myHatcherPID.SetMode(AUTOMATIC);
-  myHatcherPID.SetOutputLimits(100, 1000);
+  myHatcherPID.SetOutputLimits(100, 9000);
   myHatcherPID.SetSampleTime(60000);
 
   // **************************************************************
@@ -304,8 +296,8 @@ void loop()
   } else {
     SerialRxTx(10000);
   }
-  if (settingsStruct.SetterOnOff == 0) SetterOff(); else SetterOn();
-  if (settingsStruct.HatcherOnOff == 0) HatcherOff(); else HatcherOn();
+  Setter();
+  //Hatcher();
 }
 
 void SerialRxTx(unsigned long interval) {
@@ -325,12 +317,8 @@ void SerialRxTx(unsigned long interval) {
 }
 
 void UpdateRXtoTX() {
-  settingsStruct.SetterOnOff = settingsStructRX.SetterOnOff;
-  settingsStruct.HatcherOnOff = settingsStructRX.HatcherOnOff;
-  settingsStruct.SetterPIDOnOff = settingsStructRX.SetterPIDOnOff;
-  settingsStruct.HatcherPIDOnOff = settingsStructRX.HatcherPIDOnOff;
-  settingsStruct.SetterManualOnOff = settingsStructRX.SetterManualOnOff;
-  settingsStruct.HatcherManualOnOff = settingsStructRX.HatcherManualOnOff;
+  settingsStruct.SetterMode = settingsStructRX.SetterMode;
+  settingsStruct.HatcherMode = settingsStructRX.HatcherMode;
   settingsStruct.SetterKp = settingsStructRX.SetterKp;
   settingsStruct.SetterKi = settingsStructRX.SetterKi;
   settingsStruct.SetterKd = settingsStructRX.SetterKd;
@@ -346,12 +334,8 @@ void SerialSend(unsigned long interval) {
   if (millis() - RxTxTimer >= interval){
     RxTxTimer = millis();
     UpdateRXtoTX();
-    Serial.print("SetterOnOff: ");Serial.println(settingsStruct.SetterOnOff);
-    Serial.print("HatcherOnOff: ");Serial.println(settingsStruct.HatcherOnOff);
-    Serial.print("SetterPIDOnOff: ");Serial.println(settingsStruct.SetterPIDOnOff);
-    Serial.print("HatcherPIDOnOff: ");Serial.println(settingsStruct.HatcherPIDOnOff);
-    Serial.print("SetterManualOnOff: ");Serial.println(settingsStruct.SetterManualOnOff);
-    Serial.print("HatcherManualOnOff: ");Serial.println(settingsStruct.HatcherManualOnOff);
+    Serial.print("SetterMode: ");Serial.println(settingsStruct.SetterMode);
+    Serial.print("HatcherMode: ");Serial.println(settingsStruct.HatcherMode);
     Serial.print("SetterKp: ");Serial.println(settingsStruct.SetterKp);
     Serial.print("SetterKi: ");Serial.println(settingsStruct.SetterKi);
     Serial.print("SetterKd: ");Serial.println(settingsStruct.SetterKd);
@@ -380,29 +364,41 @@ void SerialSend(unsigned long interval) {
     }
   }
 
-void SetterOn() {
+void Setter() {
   SetterReadSensors(10000); // every 10 seconds
   SetterPID();
-  if (settingsStruct.SetterManualOnOff == 1) {
-    SetterManualMode();
-    } 
-  else if (settingsStruct.SetterManualOnOff == 0 && settingsStruct.SetterPIDOnOff == 0) {
-    SetterAutomaticMode(60000, false);
-    } 
-  else if (settingsStruct.SetterManualOnOff == 0 && settingsStruct.SetterPIDOnOff == 1) {
-    SetterAutomaticMode(60000, true);  
-    }
+  switch (settingsStruct.SetterMode) {
+    case 0: {
+      SetterOff();
+      BlinkerSpeed = 5000;
+      }
+      break;
+
+    case 1 : {
+      SetterManualMode();
+      BlinkerSpeed = 2500;
+      }
+      break;
+    case 2 : {
+      SetterAutomaticMode(60000, false);
+      BlinkerSpeed = 1000;
+      }
+      break;
+
+    case 3: { // all good - show green
+      SetterAutomaticMode(60000, false);
+      BlinkerSpeed = 100;
+      }
+      break;
+  }
   SetterPWM(10000);
   SetterEggTurn(3600000); //every hour
 }
 
-void SetterPID() {
-  mySetterPID.SetTunings(settingsStruct.SetterKp, settingsStruct.SetterKi, settingsStruct.SetterKd);
-  mySetterPID.Compute();
-}
 void SetterManualMode() {
   settingsStruct.SetterWindow = settingsStruct.SetterTempWindow;
 }
+
 void SetterAutomaticMode(unsigned long interval, bool PID) {
   //Compute output with or without PID
   if ((millis() - SetterTemperatureTargetTimer >= interval) && (PID == true)) { 
@@ -442,10 +438,16 @@ void SetterStepAdjustTemperatureWindow() {
   }
 }
 
+void SetterPID() {
+  mySetterPID.SetTunings(settingsStruct.SetterKp, settingsStruct.SetterKi, settingsStruct.SetterKd);
+  mySetterPID.Compute();
+}
+
 void SetterOff() {
   //SHUT DOWN HATCHER ENTIRELY
   digitalWrite(SetterPinSSRTemperature, LOW);
 }
+
 void SetterReadSensors(unsigned long interval) {
   //Read all sensors in the setter
   if (millis() - SetterSensorTimer >= interval)
@@ -512,7 +514,6 @@ void SetterEggTurn(unsigned long interval) {
   }
 }
 
-
 void SetterPWM(unsigned long interval) {
   if (millis() - SetterWindowTimer >= interval)
   { //time to shift the Relay Window
@@ -522,29 +523,48 @@ void SetterPWM(unsigned long interval) {
   if (settingsStruct.SetterWindow > millis() - SetterWindowTimer) digitalWrite(SetterPinSSRTemperature, HIGH);
   else digitalWrite(SetterPinSSRTemperature, LOW);
 }
-void HatcherOn() {
+
+void Hatcher() {
   HatcherReadSensors(10000);
-  HatcherExtTemperatureCheck();
   HatcherHumidityCheck();
-  if (settingsStruct.HatcherManualOnOff == 1) HatcherManualMode();
-  else {
-    if (settingsStruct.HatcherPIDOnOff == 0) HatcherAutomaticMode(60000, false);
-    else HatcherAutomaticMode(60000, true);
+  HatcherPID();
+  switch (settingsStruct.HatcherMode) {
+    case 0: {
+      HatcherOff();
+      }
+      break;
+
+    case 1 : {
+      HatcherManualMode();
+      }
+      break;
+    case 2 : {
+      HatcherAutomaticMode(60000, false);
+      }
+      break;
+
+    case 3: {
+      HatcherAutomaticMode(60000, false);
+      }
+      break;
   }
-  HatcherPWM(10000);
+  //HatcherExtTemperatureCheck();
+  //HatcherPWM(10000);
 }
+
 void HatcherOff() {
   //SHUT DOWN HATCHER ENTIRELY
   digitalWrite(HatcherPinRelayHumidity, RelayOFF);
   digitalWrite(HatcherPinSSRTemperature, LOW);
 }
+
 void HatcherReadSensors(unsigned long interval) {
   //Read all sensors in the setter
   if (millis() - HatcherSensorTimer >= interval)
   {
     HatcherSensorTimer = millis(); //reset timer
     if (Debug) Serial.println("Checking hatcher sensors");
-    if (isnan(HatcherIntDHT.readTemperature()) ||  abs(HatcherIntDHT.readTemperature() - HatcherIntDHTReadings[HatcherIntDHTTempReadIndex]) > 10.0)
+    if (isnan(HatcherIntDHT.readTemperature()))
     {
       HatcherIntDHTErrorCount += 1;
       return;
@@ -609,50 +629,59 @@ void HatcherReadSensors(unsigned long interval) {
     }
   }
 }
+
 void HatcherManualMode() {
   settingsStruct.HatcherWindow = settingsStruct.HatcherTempWindow;
 }
+
 void HatcherExtTemperatureCheck() {
   //HATCHER TEMPERATURE CHECK
   if (HatcherExtDSTemperature > HatcherTargetExtTemperature + 0.2) digitalWrite(HatcherPinSSRTemperature, LOW);
   else if (HatcherExtDSTemperature < HatcherTargetExtTemperature - 0.2) digitalWrite(HatcherPinSSRTemperature, HIGH);
 }
+
 void HatcherHumidityCheck() {
   //SET HATCHER HUMIDITY
   if (settingsStruct.HatcherIntDHTHumidity > HatcherTargetIntHumidity + 5.0) digitalWrite(HatcherPinRelayHumidity, RelayOFF);
   else if (settingsStruct.HatcherIntDHTHumidity < HatcherTargetIntHumidity - 5.0) digitalWrite(HatcherPinRelayHumidity, RelayON);
 }
+
 void HatcherAutomaticMode(unsigned long interval, bool PID) {
   //Compute output with or without PID
-  if (millis() - HatcherTemperatureTargetTimer >= interval)
+  if ((millis() - HatcherTemperatureTargetTimer >= interval) && (PID == true))
   { //time to shift the Relay Window
+    if (Debug) Serial.println("PID ADJUST HATCHER WINDOW");
     HatcherTemperatureTargetTimer = millis();
-    if (PID) {
-      HatcherPIDAdjustTemperatureTarget();
-    }
-    else {
-      HatcherStepAdjustTemperatureTarget(900000);
+    HatcherPIDAdjustTemperatureWindow();
+  }
+  else if ((millis() - HatcherTemperatureTargetTimer >= interval) && (PID == false)) {
+    //time to shift the Relay Window
+    if (Debug) Serial.println("STEP ADJUST SETTER WINDOW");
+    HatcherTemperatureTargetTimer = millis();
+    HatcherStepAdjustTemperatureTarget();
     }
   }
-}
-void HatcherPIDAdjustTemperatureTarget() {
+void HatcherPID() {
   myHatcherPID.SetTunings(settingsStruct.HatcherKp, settingsStruct.HatcherKi, settingsStruct.HatcherKd);
   myHatcherPID.Compute();
 }
-void HatcherStepAdjustTemperatureTarget(unsigned long interval) {
-  /************************************************
-    HATCHER SETPOINT ADJUSTMENT
-  ************************************************/
-  if (millis() - HatcherTemperatureTargetTimer >= interval)
-  { //time to shift the temperature set 0.2 down or 0.1 up each 15 minutes
-    HatcherTemperatureTargetTimer =  millis();
-    if (HatcherIntDHTTemperature > HatcherTargetIntTemperature + 0.3) HatcherTargetExtTemperature -= 0.5;
-    else if (HatcherIntDHTTemperature < HatcherTargetIntTemperature - 0.3) HatcherTargetExtTemperature += 0.1;
-  }
+
+void HatcherPIDAdjustTemperatureWindow() {
+  settingsStruct.HatcherWindow = settingsStruct.HatcherPIDWindow;
 }
+
+void HatcherStepAdjustTemperatureTarget() {
+    //time to shift the temperature set 0.2 down or 0.1 up
+    HatcherTemperatureTargetTimer =  millis();
+    if (HatcherIntDHTTemperature > HatcherTargetIntTemperature + 0.3) {
+      HatcherTargetExtTemperature -= 0.5;
+    }
+    else if (HatcherIntDHTTemperature < HatcherTargetIntTemperature - 0.3) {
+      HatcherTargetExtTemperature += 0.1;
+    }
+}
+
 void HatcherPWM(unsigned long interval) {
-  //Turn the output pin on/off based on pid output
-  //Pot value to adjust the sensor settings
   if (millis() - HatcherWindowTimer >= interval)
   { //time to shift the Relay Window
     HatcherWindowTimer += interval;
@@ -663,9 +692,7 @@ void HatcherPWM(unsigned long interval) {
 
 void ToggleBlink() {
   if (Simulator == true) {
-    BlinkerSpeed = 100;
-  } else {
-    BlinkerSpeed = 1000;
+    //BlinkerSpeed = 50;
   }
   //Watch out, number 13 pin is LED_BUILTIN
   if (millis() - BlinkerTimer >= BlinkerSpeed) {
