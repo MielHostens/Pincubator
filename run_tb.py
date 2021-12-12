@@ -124,8 +124,8 @@ def main():
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
-        #client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
-        client = TBDeviceMqttClient(host, "8bkAvBZ5JS8aqCM0qQ4j")
+        client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
+        #client = TBDeviceMqttClient(host, "8bkAvBZ5JS8aqCM0qQ4j")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
 
