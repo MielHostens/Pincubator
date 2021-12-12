@@ -89,6 +89,7 @@ def pushData(client, timer):
                                     }
                                 }
                             )
+        logging.info(msg="Data pushed to Thingsboard")
 
 def main():
 
