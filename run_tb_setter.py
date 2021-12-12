@@ -180,7 +180,7 @@ def main():
                     structSettingsRX.SetterKd,
                     structSettingsRX.SetterTempWindow,
                     structSettingsRX.SetterWindow,
-                    structSettingsRX.SetterDHTTempAverage,
+                    structSettingsRX.SetterDHTTemperatureAverage,
                     structSettingsRX.SetterDHTHumidity,
                     structSettingsRX.SetterSCD30Temperature,
                     structSettingsRX.SetterSCD30Humidity,
