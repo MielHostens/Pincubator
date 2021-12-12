@@ -37,7 +37,8 @@ class structSettingsRX(object):
     SetterTempWindow = 0.0
     SetterPIDWindow = 0.0
     SetterWindow = 0.0
-    SetterDHTTempAverage = 0.0
+    SetterDHTTemperatureAverage = 0.0
+    SetterDHTemperature = 0.0
     SetterDHTHumidity = 0.0
     SetterSCD30Temperature = 0.0
     SetterSCD30Humidity = 0.0
@@ -75,7 +76,8 @@ def pushData(client, timer):
                                       "Setter Temp Window":structSettingsRX.SetterTempWindow,
                                       "Setter PID Window": structSettingsRX.SetterPIDWindow,
                                       "Setter Window": structSettingsRX.SetterWindow,
-                                      "Setter Temperature DHT22": structSettingsRX.SetterDHTTempAverage,
+                                      "Setter Temperature Average": structSettingsRX.SetterDHTTemperatureAverage,
+                                      "Setter Temperature DHT22": structSettingsRX.SetterDHTemperature,
                                       "Setter Humidity DHT22": structSettingsRX.SetterDHTHumidity,
                                       "Setter Temperature SCD30": structSettingsRX.SetterSCD30Temperature,
                                       "Setter Humidity SCD30": structSettingsRX.SetterSCD30Humidity,
