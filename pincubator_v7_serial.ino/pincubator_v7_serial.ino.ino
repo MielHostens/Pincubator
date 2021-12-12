@@ -35,7 +35,7 @@
 #define RelayON 0 // Constants for Arduino relay board
 #define RelayOFF 1
 bool Debug = false;
-bool Simulator = true;
+bool Simulator = false;
 int ledState = LOW;
 int BlinkerSpeed; //Blinker speed
 
@@ -90,9 +90,9 @@ int HatcherTargetCO2 = 5000;
 // Error counters
 // ************************************************
 //Keeping track of number of erroneous readings
-long SetterDHTErrorCount = 0;
-long HatcherExtDHTErrorCount = 0;
-long HatcherIntDHTErrorCount = 0;
+unsigned long SetterDHTErrorCount = 0;
+unsigned long HatcherExtDHTErrorCount = 0;
+unsigned long HatcherIntDHTErrorCount = 0;
 
 // ************************************************
 // Smoothers
@@ -140,12 +140,12 @@ struct STRUCTRX {
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 250.0;
+  double SetterTempWindow = 0.0;
   double HatcherTempWindow = 0.0;
 } settingsStructRX;
 
 struct STRUCT {
-  byte SetterMode = 1;
+  byte SetterMode = 0;
   byte HatcherMode = 0;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
@@ -153,7 +153,7 @@ struct STRUCT {
   double HatcherKp = 0.0;
   double HatcherKi = 0.0;
   double HatcherKd = 0.0;
-  double SetterTempWindow = 250.0;
+  double SetterTempWindow = 0.0;
   double HatcherTempWindow = 0.0;
   double SetterPIDWindow = 0.0;
   double HatcherPIDWindow = 0.0;
@@ -370,24 +370,24 @@ void Setter() {
   switch (settingsStruct.SetterMode) {
     case 0: {
       SetterOff();
-      BlinkerSpeed = 100;
+      BlinkerSpeed = 5000;
       }
       break;
 
     case 1 : {
       SetterManualMode();
-      BlinkerSpeed = 1000;
+      BlinkerSpeed = 2500;
       }
       break;
     case 2 : {
       SetterAutomaticMode(60000, false);
-      BlinkerSpeed = 2500;
+      BlinkerSpeed = 1000;
       }
       break;
 
     case 3: { // all good - show green
       SetterAutomaticMode(60000, false);
-      BlinkerSpeed = 5000;
+      BlinkerSpeed = 100;
       }
       break;
   }
@@ -692,7 +692,7 @@ void HatcherPWM(unsigned long interval) {
 
 void ToggleBlink() {
   if (Simulator == true) {
-    BlinkerSpeed = 50;
+    //BlinkerSpeed = 50;
   }
   //Watch out, number 13 pin is LED_BUILTIN
   if (millis() - BlinkerTimer >= BlinkerSpeed) {
