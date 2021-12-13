@@ -173,7 +173,7 @@ def main():
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 pushData(client = client, timer=300)
-                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} '.format(
+                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} '.format(
                     structSettingsRX.SetterMode,
                     structSettingsRX.SetterKp,
                     structSettingsRX.SetterKi,
@@ -181,6 +181,7 @@ def main():
                     structSettingsRX.SetterTempWindow,
                     structSettingsRX.SetterWindow,
                     structSettingsRX.SetterDHTTemperatureAverage,
+                    structSettingsRX.SetterDHTTemperature,
                     structSettingsRX.SetterDHTHumidity,
                     structSettingsRX.SetterSCD30Temperature,
                     structSettingsRX.SetterSCD30Humidity,
