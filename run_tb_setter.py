@@ -17,7 +17,8 @@ class structSettingsTX(object):
     SetterKp = 0.0
     SetterKi = 0.0
     SetterKd = 0.0
-    SetterTempWindow = 1000.0
+    SetterMaxWindow = 1250.0
+    SetterMinWindow = 100.0
 
 def writeSettings(object_to_save):
     with open('SetterSettings.ini', 'wb') as output:
