@@ -10,12 +10,13 @@
 // ************************************************
 // Pin definitions & sensors
 // ************************************************
-#define SetterPinRelayEggTurner 9 // Pin for relay for egg turner in setter 
-#define SetterPinSSRTemperature 12 //SSR Setter pin
-#define BlinkerPin 41 //Blinker pin
-#define SetterPinDS2 47
-#define SetterPinDS1 49
-#define SetterPinDHT 51
+#define BlinkerPin 2 //Blinker pin
+#define SetterPinRelayEggTurner 3 // Pin for relay for egg turner in setter 
+#define SetterPinSSRTemperature 4 //SSR Setter pin
+#define SetterPinDHT 5
+#define SetterPinDS1 6
+#define SetterPinDS2 7
+#define HatcherPinDS1 8
 
 // ************************************************
 // General settings & definitions
@@ -39,10 +40,12 @@ DHT SetterDHT(SetterPinDHT, DHTType); //// Initialize DHT sensor for normal 16mh
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWireSetterDS1(SetterPinDS1);
 OneWire oneWireSetterDS2(SetterPinDS2);
+OneWire oneWireHatcherDS1(SetterPinDS2);
 
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature SetterDS1(&oneWireSetterDS1);
 DallasTemperature SetterDS2(&oneWireSetterDS2);
+DallasTemperature HatcherDS1(&oneWireHatcherDS1);
 
 //Initiate SCD30 C02
 Adafruit_SCD30  scd30;
@@ -68,7 +71,6 @@ const int numReadings = 60;
 double SetterDHTReadings[numReadings];      // the readings from the analog input
 int SetterDHTTempReadIndex = 0;              // the index of the current reading
 double SetterDHTTempTotal = 0.0;                  // the running total
-double SetterDHTTempAverage = 0.0;                // the average
 
 // ************************************************
 // Timers
@@ -86,19 +88,21 @@ unsigned long RxTxTimer = 28000;
 // **************************************************************
 
 struct STRUCTRX {
-  byte SetterMode = 0;
+  byte SetterMode = 1;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterTempWindow = 0.0;
+  double SetterMaxWindow = 1250.0;
+  double SetterMinWindow = 1000.0;
 } settingsStructRX;
 
 struct STRUCT {
-  byte SetterMode = 0;
+  byte SetterMode = 1;
   double SetterKp = 0.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterTempWindow = 0.0;
+  double SetterMaxWindow = 0.0;
+  double SetterMinWindow = 0.0;
   double SetterPIDWindow = 0.0;
   double SetterWindow = 0.0;
   double SetterDHTTemperature = 0.0;
@@ -110,6 +114,7 @@ struct STRUCT {
   double SetterDS1Temperature = 0.0;
   double SetterDS2Temperature = 0.0;
   double SetterDHTErrorCount = 0;
+  double HatcherDS1Temperature = 0.0;
 } settingsStruct;
 
 // ************************************************
@@ -156,6 +161,7 @@ void setup()
   // Try to initialize DS sensors
   SetterDS1.begin();
   SetterDS2.begin();
+  HatcherDS1.begin();
 
   // Try to initialize SCD30 !
   if (!scd30.begin()) {
@@ -219,7 +225,8 @@ void UpdateRXtoTX() {
   settingsStruct.SetterKp = settingsStructRX.SetterKp;
   settingsStruct.SetterKi = settingsStructRX.SetterKi;
   settingsStruct.SetterKd = settingsStructRX.SetterKd;
-  settingsStruct.SetterTempWindow = settingsStructRX.SetterTempWindow;
+  settingsStruct.SetterMaxWindow = settingsStructRX.SetterMaxWindow;
+  settingsStruct.SetterMinWindow = settingsStructRX.SetterMinWindow;
   }
 
 void SerialSend(unsigned long interval) {
@@ -231,7 +238,8 @@ void SerialSend(unsigned long interval) {
     Serial.print("SetterKp: ");Serial.println(settingsStruct.SetterKp);
     Serial.print("SetterKi: ");Serial.println(settingsStruct.SetterKi);
     Serial.print("SetterKd: ");Serial.println(settingsStruct.SetterKd);
-    Serial.print("SetterTempWindow: ");Serial.println(settingsStruct.SetterTempWindow);
+    Serial.print("SetterMaxWindow: ");Serial.println(settingsStruct.SetterMaxWindow);
+    Serial.print("SetterMinWindow: ");Serial.println(settingsStruct.SetterMinWindow);
     Serial.print("SetterWindow: ");Serial.println(settingsStruct.SetterWindow);
     Serial.print("SetterDHTTemperatureAverage: ");Serial.println(settingsStruct.SetterDHTTemperatureAverage);
     Serial.print("SetterDHTTemperature: ");Serial.println(settingsStruct.SetterDHTTemperature);
@@ -242,6 +250,7 @@ void SerialSend(unsigned long interval) {
     Serial.print("SetterSCD30CO2: ");Serial.println(settingsStruct.SetterSCD30CO2);
     Serial.print("SetterDS1Temperature: ");Serial.println(settingsStruct.SetterDS1Temperature);
     Serial.print("SetterDS2Temperature: ");Serial.println(settingsStruct.SetterDS2Temperature);
+    Serial.print("HatcherDS1Temperature: ");Serial.println(settingsStruct.HatcherDS1Temperature);
     }
   }
 
@@ -262,13 +271,13 @@ void Setter() {
       }
       break;
     case 2 : {
-      SetterAutomaticMode(60000, false);
+      SetterAutomaticMode(3600000, false);
       BlinkerSpeed = 1000;
       }
       break;
 
     case 3: {
-      SetterAutomaticMode(60000, false);
+      SetterAutomaticMode(60000, true);
       BlinkerSpeed = 100;
       }
       break;
@@ -278,7 +287,7 @@ void Setter() {
 }
 
 void SetterManualMode() {
-  settingsStruct.SetterWindow = settingsStruct.SetterTempWindow;
+  settingsStruct.SetterWindow = settingsStruct.SetterMaxWindow;
 }
 
 void SetterAutomaticMode(unsigned long interval, bool PID) {
@@ -304,23 +313,24 @@ void SetterPIDAdjustTemperatureWindow() {
 void SetterStepAdjustTemperatureWindow() {
   if ((settingsStruct.SetterDHTTemperatureAverage > (SetterTargetTemperature + 0.15)))
   {
-    settingsStruct.SetterWindow -= 20.0;
+    settingsStruct.SetterWindow -= 2.0;
   }
   else if ((settingsStruct.SetterDHTTemperatureAverage > (SetterTargetTemperature + 0.1)))
   {
-    settingsStruct.SetterWindow -= 10.0;
+    settingsStruct.SetterWindow -= 1.0;
   }
   else if (settingsStruct.SetterDHTTemperatureAverage < (SetterTargetTemperature - 0.2))
   {
-    settingsStruct.SetterWindow += 10.0;
+    settingsStruct.SetterWindow += 2.0;
   }
   else if (settingsStruct.SetterDHTTemperatureAverage < (SetterTargetTemperature - 0.1))
   {
-    settingsStruct.SetterWindow += 5.0;
+    settingsStruct.SetterWindow += 1.0;
   }
 }
 
 void SetterPID() {
+  mySetterPID.SetOutputLimits(settingsStruct.SetterMinWindow, settingsStruct.SetterMaxWindow);
   mySetterPID.SetTunings(settingsStruct.SetterKp, settingsStruct.SetterKi, settingsStruct.SetterKd);
   mySetterPID.Compute();
 }
@@ -342,29 +352,30 @@ void SetterReadEssentialSensors(unsigned long interval) {
           settingsStruct.SetterDHTHumidity = random(400, 500) / 10.0;
       } else {
           if (Debug) Serial.println("Using real values setter essential sensors");
-          float SetterDHTHumidityReading = SetterDHT.readHumidity();
-          float SetterDHTTemperatureReading = SetterDHT.readTemperature();          
+          double SetterDHTHumidityReading = SetterDHT.readHumidity();
+          double SetterDHTTemperatureReading = SetterDHT.readTemperature();          
           if (isnan(SetterDHTTemperatureReading))
             {
               if (Debug) Serial.println("Setter DHT error");
               settingsStruct.SetterDHTErrorCount += 1;
               SetterDHTTemperatureReading = settingsStruct.SetterSCD30Temperature; // BACKUP
+              SetterDHTHumidityReading = settingsStruct.SetterSCD30Humidity;
               //return; return statement takes it back
             }
           else {
             settingsStruct.SetterDHTTemperature = SetterDHTTemperatureReading;
             settingsStruct.SetterDHTHumidity = SetterDHTHumidityReading;            
             }
+          SetterDHTTempTotal = SetterDHTTempTotal - SetterDHTReadings[SetterDHTTempReadIndex];// subtract the last reading:
+          SetterDHTReadings[SetterDHTTempReadIndex] = SetterDHTTemperatureReading;// read from the sensor:    
+          SetterDHTTempTotal = SetterDHTTempTotal + SetterDHTReadings[SetterDHTTempReadIndex];// add the reading to the total:
+          SetterDHTTempReadIndex = SetterDHTTempReadIndex + 1;// advance to the next position in the array:
+          if (SetterDHTTempReadIndex >= numReadings) {
+            // ...wrap around to the beginning:
+            SetterDHTTempReadIndex = 0;
+          }
+          settingsStruct.SetterDHTTemperatureAverage = SetterDHTTempTotal / numReadings;// calculate the average:
       }
-      SetterDHTTempTotal = SetterDHTTempTotal - SetterDHTReadings[SetterDHTTempReadIndex];// subtract the last reading:
-      SetterDHTReadings[SetterDHTTempReadIndex] = settingsStruct.SetterDHTTemperature;// read from the sensor:    
-      SetterDHTTempTotal = SetterDHTTempTotal + SetterDHTReadings[SetterDHTTempReadIndex];// add the reading to the total:
-      SetterDHTTempReadIndex = SetterDHTTempReadIndex + 1;// advance to the next position in the array:
-      if (SetterDHTTempReadIndex >= numReadings) {
-        // ...wrap around to the beginning:
-        SetterDHTTempReadIndex = 0;
-      }
-      settingsStruct.SetterDHTTemperatureAverage = SetterDHTTempTotal / numReadings;// calculate the average:
   }
 }
 
@@ -381,13 +392,16 @@ void SetterReadSensors(unsigned long interval) {
           settingsStruct.SetterSCD30CO2 = random(500, 5000);
           settingsStruct.SetterDS1Temperature = random(370, 380) / 10.0;
           settingsStruct.SetterDS2Temperature = random(370, 380) / 10.0;
-          settingsStruct.SetterWindow = settingsStructRX.SetterTempWindow;
+          settingsStruct.HatcherDS1Temperature = random(370, 380) / 10.0;
+          settingsStruct.SetterWindow = settingsStructRX.SetterMaxWindow;
       } else {
           if (Debug) Serial.println("Using real values setter sensors");
           SetterDS1.requestTemperatures();
           settingsStruct.SetterDS1Temperature = SetterDS1.getTempCByIndex(0);
           SetterDS2.requestTemperatures();
-          settingsStruct.SetterDS2Temperature = SetterDS2.getTempCByIndex(0); 
+          settingsStruct.SetterDS2Temperature = SetterDS2.getTempCByIndex(0);
+          HatcherDS1.requestTemperatures();
+          settingsStruct.HatcherDS1Temperature = HatcherDS1.getTempCByIndex(0); 
           scd30.read();
           settingsStruct.SetterSCD30Temperature = scd30.temperature;
           settingsStruct.SetterSCD30Humidity = scd30.relative_humidity;
@@ -411,6 +425,8 @@ void SetterEggTurn(unsigned long interval) {
 }
 
 void SetterPWM(unsigned long interval) {
+  settingsStruct.SetterWindow = min(settingsStruct.SetterWindow, settingsStruct.SetterMaxWindow);
+  settingsStruct.SetterWindow = max(settingsStruct.SetterWindow, settingsStruct.SetterMinWindow);
   if (millis() - SetterWindowTimer >= interval)
   { //time to shift the Relay Window
     if (Debug) Serial.println("Checking setter window");
