@@ -48,6 +48,7 @@ class structSettingsRX(object):
     SetterDS1Temperature = 0.0
     SetterDS2Temperature = 0.0
     SetterDHTErrorCount = 0.0
+    HatcherDS1Temperature = 0.0
 
 
 def callback(client, result, extra):
@@ -90,7 +91,8 @@ def pushData(client, timer):
                                       "Setter Kp": structSettingsRX.SetterKp,
                                       "Setter Ki": structSettingsRX.SetterKi,
                                       "Setter Kd": structSettingsRX.SetterKd,
-                                      "Setter Error Count": structSettingsRX.SetterDHTErrorCount
+                                      "Setter Error Count": structSettingsRX.SetterDHTErrorCount,
+                                      "Hatcher Temperature DS18 Extra": structSettingsRX.HatcherDS1Temperature
                                     }
                                 }
                             )
@@ -179,8 +181,11 @@ def main():
                 structSettingsRX.SetterDHTErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
+                structSettingsRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
+
                 pushData(client = client, timer=300)
-                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
+                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
                     structSettingsRX.SetterMode,
                     structSettingsRX.SetterKp,
                     structSettingsRX.SetterKi,
@@ -196,7 +201,8 @@ def main():
                     structSettingsRX.SetterSCD30CO2,
                     structSettingsRX.SetterDS1Temperature,
                     structSettingsRX.SetterDS2Temperature,
-                    structSettingsRX.SetterDHTErrorCount
+                    structSettingsRX.SetterDHTErrorCount,
+                    structSettingsRX.HatcherDS1Temperature
                     )
                 )
 
