@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import time
+import datetime
 from pySerialTransfer import pySerialTransfer as txfer
 from tb_gateway_mqtt import TBDeviceMqttClient
+from telegram import Update, ForceReply
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import logging
 import pickle
 import sys
@@ -47,6 +50,7 @@ class structSettingsRX(object):
     SetterDS1Temperature = 0.0
     SetterDS2Temperature = 0.0
     SetterDHTErrorCount = 0.0
+    LastSerial = datetime.datetime.now()
 
 
 def callback(client, result, extra):
@@ -95,24 +99,84 @@ def pushData(client, timer):
                             )
         logging.info(msg="Data pushed to Thingsboard")
 
+# Define a few command handlers. These usually take the two arguments update and
+# context.
+def start(update: Update, context: CallbackContext) -> None:
+    """Send a message when the command /start is issued."""
+    user = update.effective_user
+    update.message.reply_markdown_v2(
+        fr'Hi {user.mention_markdown_v2()}\!',
+        reply_markup=ForceReply(selective=True),
+    )
+
+def setter(update: Update, context: CallbackContext) -> None:
+    """Send a message when the command /start is issued."""
+    datediff = datetime.datetime.now() - structSettingsRX.LastSerial
+    user = update.effective_user
+    update.message.reply_text(fr'Hi {user.first_name}, this is your SETTER replying')
+    update.message.reply_text(fr'My last serial communication with arduino was at {structSettingsRX.LastSerial}')
+    update.message.reply_text(fr'That was {round(datediff.total_seconds(), 0)} seconds ago')
+    update.message.reply_text(fr'My temperature currently is {round(structSettingsRX.SetterDHTTemperature,1)} °C')
+    update.message.reply_text(fr'My humidity currently is {round(structSettingsRX.SetterDHTHumidity, 1)} %')
+
+    update.message.reply_markdown_v2(
+        fr'Thanks for asking {user.mention_markdown_v2()}\! Any other values wanted?',
+        reply_markup=ForceReply(selective=True),
+    )
+
+def help_command(update: Update, context: CallbackContext) -> None:
+    """Send a message when the command /help is issued."""
+    update.message.reply_text('Help!')
+
+
+def echo(update: Update, context: CallbackContext) -> None:
+    """Echo the user message."""
+    update.message.reply_text("No idea what you want from me")
+
 def main():
 
     try:
+        ## USB
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
-        client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
-        #client = TBDeviceMqttClient(host, "8bkAvBZ5JS8aqCM0qQ4j")
+
+        ## Thingsboard
+        #client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
+        client = TBDeviceMqttClient(host, "9aqkgXRwb56wOks7miIv")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
 
-
+        ## Serial communication
         link = txfer.SerialTransfer(port)
         link.open()
-
         time.sleep(2)
 
-        # Read last saved settings
+        ## Read last saved settings
         structSettingsTX = readSettings()
+
+        ## Telegram
+        """Start the bot."""
+        # Create the Updater and pass it your bot's token.
+        updater = Updater("5038308156:AAE7SJQUj2aA-3lXId-gWZnpHb1612gTKQw")
+
+        # Get the dispatcher to register handlers
+        dispatcher = updater.dispatcher
+
+        # on different commands - answer in Telegram
+        dispatcher.add_handler(CommandHandler("start", start))
+        dispatcher.add_handler(CommandHandler("help", help_command))
+        dispatcher.add_handler(CommandHandler("setter", setter))
+
+        # on non command i.e message - echo the message on Telegram
+        dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+        # Start the Bot
+        updater.start_polling()
+
+        # Run the bot until you press Ctrl-C or the process receives SIGINT,
+        # SIGTERM or SIGABRT. This should be used most of the time, since
+        # start_polling() is non-blocking and will stop the bot gracefully.
+        # updater.idle()
 
         logging.info("Setup OK")
         while True:
@@ -178,14 +242,14 @@ def main():
                 structSettingsRX.SetterDHTErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
+                structSettingsRX.LastSerial = datetime.datetime.now()
                 pushData(client = client, timer=300)
-                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
+                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} '.format(
                     structSettingsRX.SetterMode,
                     structSettingsRX.SetterKp,
                     structSettingsRX.SetterKi,
                     structSettingsRX.SetterKd,
                     structSettingsRX.SetterMaxWindow,
-                    structSettingsRX.SetterMinWindow,
                     structSettingsRX.SetterWindow,
                     structSettingsRX.SetterDHTTemperatureAverage,
                     structSettingsRX.SetterDHTTemperature,
@@ -208,6 +272,7 @@ def main():
                     print('ERROR: STOP_BYTE_ERROR')
                 else:
                     print('ERROR: {}'.format(link.status))
+
 
     except KeyboardInterrupt:
         link.close()

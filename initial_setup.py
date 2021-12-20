@@ -22,13 +22,13 @@ with RestClientCE(base_url=url) as rest_client:
 
         # Setter
         # Creating Setter Asset
-        asset = Asset(name="PincubatorTest", type="Incubator")
-        asset = rest_client.save_asset(asset)
+        asset = Asset(name="Pincubator", type="Incubator")
+        # asset = rest_client.save_asset(asset)
 
         logging.info("Asset was created:\n%r\n", asset)
 
         # creating a Device
-        device = Device(name="PincubatorTest", type="Multiple")
+        device = Device(name="Hatcher", type="Multiple")
         device = rest_client.save_device(device)
 
         logging.info(" Device was created:\n%r\n", device)
@@ -39,7 +39,9 @@ with RestClientCE(base_url=url) as rest_client:
 
         logging.info(" Relation was created:\n%r\n", relation)
 
-        settings = '{"PushOnOff": true, "SetterOnOff": true, "SetterTempWindow": 1000.0, "SetterMode": 1.0, "SetterKp": 0.1, "SetterKi": 0.1, "SetterKd": 0.1, "HatcherOnOff": false, "HatcherTempWindow": 1000.0, "HatcherMode": 1.0, "HatcherKp": 0.1, "HatcherKi": 0.1, "HatcherKd": 0.1}'
+        #settings = '{"PushOnOff": true, "SetterOnOff": true, "SetterTempWindow": 1000.0, "SetterMode": 1.0, "SetterKp": 0.1, "SetterKi": 0.1, "SetterKd": 0.1, "HatcherOnOff": false, "HatcherTempWindow": 1000.0, "HatcherMode": 1.0, "HatcherKp": 0.1, "HatcherKi": 0.1, "HatcherKd": 0.1}'
+        settings = '{"HatcherMode": 1.0, "HatcherTempWindow": 1000.0, "HatcherKp": 0.1, "HatcherKi": 0.1, "HatcherKd": 0.1}'
+
         # save device shared attributes
         res = rest_client.save_device_attributes(body = settings, device_id= DeviceId('DEVICE', device.id), scope= 'SHARED_SCOPE')
 
