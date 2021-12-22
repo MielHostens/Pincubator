@@ -58,7 +58,7 @@ def updateSettings(key, value):
         logging.info(msg="Settings for " + str(key) + " to value: " + str(value))
     writeSettings()
 
-def writeSettings(object_to_save):
+def writeSettings():
     global setterTX
     with open('HatcherSettings.ini', 'wb') as output:
         pickle.dump(setterTX, output)
