@@ -50,21 +50,6 @@ Adafruit_SCD30  scd30;
 SerialTransfer myTransfer;
 
 // ************************************************
-// Targets
-// ************************************************
-//Hatcher goals
-double HatcherTargetExtTemperature = 40.1;  //Setting external temperature value
-double HatcherTargetIntTemperature = 37.6;
-double HatcherTargetIntHumidity = 65.0; //Stores internal temperature value
-
-// ************************************************
-// Error counters
-// ************************************************
-//Keeping track of number of erroneous readings
-unsigned long HatcherExtDSErrorCount = 0;
-unsigned long HatcherIntDSErrorCount = 0;
-
-// ************************************************
 // Smoothers
 // ************************************************
 //DHT Smoothing
@@ -96,22 +81,19 @@ unsigned long RxTxTimer = 28000;
 
 struct STRUCTRX {
   byte HatcherMode = 0;
-  double HatcherKp = 0.0;
-  double HatcherKi = 0.0;
-  double HatcherKd = 0.0;
-  double HatcherMaxWindow = 0.0;
-  double HatcherMinWindow = 0.0;
+  double HatcherTempTargetExtTemperature = 40.1;
+  double HatcherTempTargetIntTemperature = 37.6;
+  double HatcherTempTargetIntHumidity = 65.0;
 } settingsStructRX;
 
 struct STRUCT {
   byte HatcherMode = 0;
-  double HatcherKp = 0.0;
-  double HatcherKi = 0.0;
-  double HatcherKd = 0.0;
-  double HatcherMaxWindow = 0.0;
-  double HatcherMinWindow = 0.0;
-  double HatcherPIDWindow = 0.0;
-  double HatcherWindow = 0.0;
+  double HatcherTempTargetExtTemperature = 0.0;
+  double HatcherTempTargetIntTemperature = 0.0;
+  double HatcherTempTargetIntHumidity = 0.0; 
+  double HatcherTargetExtTemperature = 0.0;
+  double HatcherTargetIntTemperature = 0.0;
+  double HatcherTargetIntHumidity = 0.0;
   double HatcherIntDSTempAverage = 0.0;
   double HatcherIntDSTemperature = 0.0;
   double HatcherIntDSErrorCount = 0.0;  
@@ -123,19 +105,6 @@ struct STRUCT {
   double HatcherSCD30CO2 = 0.0;
   double SetterDSTemperature = 0.0;
 } settingsStruct;
-
-// ************************************************
-// PID Variables and constants
-// ************************************************
-
-PID myHatcherPID(
-  &settingsStruct.HatcherIntDSTempAverage, 
-  &settingsStruct.HatcherPIDWindow, 
-  &HatcherTargetIntTemperature, 
-  settingsStruct.HatcherKp, 
-  settingsStruct.HatcherKi, 
-  settingsStruct.HatcherKd, 
-  DIRECT);
 
 void setup()
 {
@@ -173,13 +142,6 @@ void setup()
   } else {
     if (Debug) Serial.println("SCD30 found");
     }
-
-  // **************************************************************
-  // * PID
-  // ***************************************************************/
-  myHatcherPID.SetMode(AUTOMATIC);
-  myHatcherPID.SetOutputLimits(100, 9000);
-  myHatcherPID.SetSampleTime(60000);
 
   // **************************************************************
   // * SMOOTHERS
@@ -229,11 +191,9 @@ void SerialRxTx(unsigned long interval) {
 
 void UpdateRXtoTX() {
   settingsStruct.HatcherMode = settingsStructRX.HatcherMode;
-  settingsStruct.HatcherKp = settingsStructRX.HatcherKp;
-  settingsStruct.HatcherKi = settingsStructRX.HatcherKi;
-  settingsStruct.HatcherKd = settingsStructRX.HatcherKd;
-  settingsStruct.HatcherMaxWindow = settingsStructRX.HatcherMaxWindow;
-  settingsStruct.HatcherMinWindow = settingsStructRX.HatcherMinWindow;
+  settingsStruct.HatcherTempTargetExtTemperature = settingsStructRX.HatcherTempTargetExtTemperature;
+  settingsStruct.HatcherTempTargetIntTemperature = settingsStructRX.HatcherTempTargetIntTemperature;
+  settingsStruct.HatcherTempTargetIntHumidity = settingsStructRX.HatcherTempTargetIntHumidity;
   }
 
 void SerialSend(unsigned long interval) {
@@ -242,17 +202,17 @@ void SerialSend(unsigned long interval) {
     RxTxTimer = millis();
     UpdateRXtoTX();
     Serial.print("HatcherMode: ");Serial.println(settingsStruct.HatcherMode);
-    Serial.print("HatcherKp: ");Serial.println(settingsStruct.HatcherKp);
-    Serial.print("HatcherKi: ");Serial.println(settingsStruct.HatcherKi);
-    Serial.print("HatcherKd: ");Serial.println(settingsStruct.HatcherKd);
-    Serial.print("HatcherMaxWindow: ");Serial.println(settingsStruct.HatcherMaxWindow);
-    Serial.print("HatcherMinWindow: ");Serial.println(settingsStruct.HatcherMinWindow);
-    Serial.print("HatcherWindow: ");Serial.println(settingsStruct.HatcherWindow);
+    Serial.print("HatcherTempTargetExtTemperature: ");Serial.println(settingsStruct.HatcherTempTargetExtTemperature);
+    Serial.print("HatcherTempTargetIntTemperature: ");Serial.println(settingsStruct.HatcherTempTargetIntTemperature);
+    Serial.print("HatcherTempTargetIntHumidity: ");Serial.println(settingsStruct.HatcherTempTargetIntHumidity);
+    Serial.print("HatcherTargetExtTemperature: ");Serial.println(settingsStruct.HatcherTargetExtTemperature);
+    Serial.print("HatcherTargetIntTemperature: ");Serial.println(settingsStruct.HatcherTargetIntTemperature);
+    Serial.print("HatcherTargetIntHumidity: ");Serial.println(settingsStruct.HatcherTargetIntHumidity);
     Serial.print("HatcherIntDSTempAverage: ");Serial.println(settingsStruct.HatcherIntDSTempAverage);
     Serial.print("HatcherIntDSTemperature: ");Serial.println(settingsStruct.HatcherIntDSTemperature);
-    Serial.print("HatcherIntDSErrors: ");Serial.println(HatcherIntDSErrorCount);
+    Serial.print("HatcherIntDSErrors: ");Serial.println(settingsStruct.HatcherIntDSErrorCount);
     Serial.print("HatcherExtDSTemperature: ");Serial.println(settingsStruct.HatcherExtDSTemperature);
-    Serial.print("HatcherExtDSErrors: ");Serial.println(HatcherExtDSErrorCount);
+    Serial.print("HatcherExtDSErrors: ");Serial.println(settingsStruct.HatcherExtDSErrorCount);
     Serial.print("HatcherSCD30Temperature: ");Serial.println(settingsStruct.HatcherSCD30Temperature);
     Serial.print("HatcherSCD30Humidity: ");Serial.println(settingsStruct.HatcherSCD30Humidity);
     Serial.print("HatcherSCD30CO2: ");Serial.println(settingsStruct.HatcherSCD30CO2);
@@ -263,39 +223,31 @@ void SerialSend(unsigned long interval) {
 void Hatcher() {
   HatcherReadEssentialSensors(10000); // every 10 seconds
   HatcherReadSensors(10000); // every 10 seconds
-  HatcherPID();
   switch (settingsStruct.HatcherMode) {
     case 0: {
       HatcherOff();
       BlinkerSpeed = 5000;
       }
       break;
-
     case 1 : {
       HatcherManualMode();
+      HatcherExtTemperatureCheck();
+      HatcherIntHumidityCheck();
       BlinkerSpeed = 2500;
       }
       break;
     case 2 : {
-      HatcherAutomaticMode(3600000, false);
+      HatcherIntTemperatureCheck(3600000);
+      HatcherIntHumidityCheck();
+      HatcherExtTemperatureCheck();
       BlinkerSpeed = 1000;
       }
       break;
-
-    case 3: { // all good - show green
-      HatcherAutomaticMode(60000, true);
-      BlinkerSpeed = 100;
-      }
-      break;
   }
-  HatcherExtTemperatureCheck();
-  HatcherHumidityCheck();
-  HatcherPWM(10000);
 }
 
 void HatcherOff() {
   //SHUT DOWN HATCHER ENTIRELY
-  settingsStruct.HatcherWindow = 0.0;
   digitalWrite(HatcherPinRelayHumidity, RelayOFF);
   digitalWrite(HatcherPinSSRTemperature, LOW);
 }
@@ -369,8 +321,9 @@ void HatcherReadSensors(unsigned long interval) {
           settingsStruct.HatcherSCD30Temperature = random(370, 380) / 10.0;
           settingsStruct.HatcherSCD30Humidity = random(400, 500) / 10.0;
           settingsStruct.HatcherSCD30CO2 = random(500, 5000);
-          settingsStruct.HatcherWindow = settingsStructRX.HatcherMaxWindow;
-          settingsStruct.SetterDSTemperature = random(370, 380) / 10.0;       
+          settingsStruct.HatcherTargetExtTemperature = settingsStructRX.HatcherTempTargetExtTemperature;
+          settingsStruct.HatcherTargetIntTemperature = settingsStructRX.HatcherTempTargetIntTemperature;
+          settingsStruct.SetterDSTemperature = random(370, 380) / 10.0; 
       } else {
           if (Debug) Serial.println("Using real values setter sensors");
           scd30.read();
@@ -384,66 +337,35 @@ void HatcherReadSensors(unsigned long interval) {
 }
 
 void HatcherManualMode() {
-  settingsStruct.HatcherWindow = settingsStruct.HatcherMaxWindow;
+  settingsStruct.HatcherTargetExtTemperature = settingsStructRX.HatcherTempTargetExtTemperature;
+  settingsStruct.HatcherTargetIntTemperature = settingsStructRX.HatcherTempTargetIntTemperature;
 }
 
 void HatcherExtTemperatureCheck() {
   //HATCHER TEMPERATURE CHECK
-  if (settingsStruct.HatcherExtDSTemperature > HatcherTargetExtTemperature + 0.2) digitalWrite(HatcherPinSSRTemperature, LOW);
-  else if (settingsStruct.HatcherExtDSTemperature < HatcherTargetExtTemperature - 0.2) digitalWrite(HatcherPinSSRTemperature, HIGH);
+  if (settingsStruct.HatcherExtDSTemperature > settingsStruct.HatcherTargetExtTemperature + 0.2) digitalWrite(HatcherPinSSRTemperature, LOW);
+  else if (settingsStruct.HatcherExtDSTemperature < settingsStruct.HatcherTargetExtTemperature - 0.2) digitalWrite(HatcherPinSSRTemperature, HIGH);
 }
 
-void HatcherHumidityCheck() {
+void HatcherIntHumidityCheck() {
   //SET HATCHER HUMIDITY
-  if (settingsStruct.HatcherSCD30Humidity > HatcherTargetIntHumidity + 5.0) digitalWrite(HatcherPinRelayHumidity, RelayOFF);
-  else if (settingsStruct.HatcherSCD30Humidity < HatcherTargetIntHumidity - 5.0) digitalWrite(HatcherPinRelayHumidity, RelayON);
+  if (settingsStruct.HatcherSCD30Humidity > settingsStruct.HatcherTargetIntHumidity + 5.0) digitalWrite(HatcherPinRelayHumidity, RelayOFF);
+  else if (settingsStruct.HatcherSCD30Humidity < settingsStruct.HatcherTargetIntHumidity - 5.0) digitalWrite(HatcherPinRelayHumidity, RelayON);
 }
 
-void HatcherAutomaticMode(unsigned long interval, bool PID) {
+void HatcherIntTemperatureCheck(unsigned long interval) {
   //Compute output with or without PID
-  if ((millis() - HatcherTemperatureTargetTimer >= interval) && (PID == true))
+  if (millis() - HatcherTemperatureTargetTimer >= interval)
   { //time to shift the Relay Window
-    if (Debug) Serial.println("PID ADJUST HATCHER WINDOW");
-    HatcherTemperatureTargetTimer = millis();
-    HatcherPIDAdjustTemperatureWindow();
-  }
-  else if ((millis() - HatcherTemperatureTargetTimer >= interval) && (PID == false)) {
-    //time to shift the Relay Window
     if (Debug) Serial.println("STEP ADJUST SETTER WINDOW");
     HatcherTemperatureTargetTimer = millis();
-    HatcherStepAdjustTemperatureTarget();
+    if (settingsStruct.HatcherIntDSTempAverage > settingsStruct.HatcherTargetIntTemperature + 0.3) {
+      settingsStruct.HatcherTargetExtTemperature -= 0.5;
+    }
+    else if (settingsStruct.HatcherIntDSTempAverage < settingsStruct.HatcherTargetIntTemperature - 0.3) {
+      settingsStruct.HatcherTargetExtTemperature += 0.1;
     }
   }
-void HatcherPID() {
-  myHatcherPID.SetOutputLimits(settingsStruct.HatcherMinWindow, settingsStruct.HatcherMaxWindow);
-  myHatcherPID.SetTunings(settingsStruct.HatcherKp, settingsStruct.HatcherKi, settingsStruct.HatcherKd);
-  myHatcherPID.Compute();
-}
-
-void HatcherPIDAdjustTemperatureWindow() {
-  settingsStruct.HatcherWindow = settingsStruct.HatcherPIDWindow;
-}
-
-void HatcherStepAdjustTemperatureTarget() {
-    //time to shift the temperature set 0.2 down or 0.1 up
-    HatcherTemperatureTargetTimer =  millis();
-    if (settingsStruct.HatcherIntDSTempAverage > HatcherTargetIntTemperature + 0.3) {
-      HatcherTargetExtTemperature -= 0.5;
-    }
-    else if (settingsStruct.HatcherIntDSTempAverage < HatcherTargetIntTemperature - 0.3) {
-      HatcherTargetExtTemperature += 0.1;
-    }
-}
-
-void HatcherPWM(unsigned long interval) {
-  settingsStruct.HatcherWindow = min(settingsStruct.HatcherWindow, settingsStruct.HatcherMaxWindow);
-  settingsStruct.HatcherWindow = max(settingsStruct.HatcherWindow, settingsStruct.HatcherMinWindow);
-  if (millis() - HatcherWindowTimer >= interval)
-  { //time to shift the Relay Window
-    HatcherWindowTimer += interval;
-  }
-  if (settingsStruct.HatcherWindow > millis() - HatcherWindowTimer) digitalWrite(HatcherPinSSRTemperature, HIGH);
-  else digitalWrite(HatcherPinSSRTemperature, LOW);
 }
 
 void ToggleBlink() {
