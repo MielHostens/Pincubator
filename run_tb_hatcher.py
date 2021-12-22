@@ -124,7 +124,7 @@ def main():
             setterTX = structSettingsTX()
         setterRX = structSettingsRX()
 
-        logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
+        logging.info(msg='Start settings | {} | {} | {} | {} '.format(
             setterTX.HatcherMode,
             setterTX.HatcherTempTargetExtTemperature,
             setterTX.HatcherTempTargetIntTemperature,
