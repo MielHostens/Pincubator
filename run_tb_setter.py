@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import time
 from pySerialTransfer import pySerialTransfer as txfer
 from tb_gateway_mqtt import TBDeviceMqttClient
-import logging
-import pickle
-import sys
+import sys, json, codecs, os, time, logging, pickle
+
 
 pushTimer = time.time()
 
@@ -13,37 +11,38 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 class structSettingsTX(object):
-    SetterMode = 0
-    SetterKp = 0.0
-    SetterKi = 0.0
-    SetterKd = 0.0
-    SetterMaxWindow = 1250.0
-    SetterMinWindow = 100.0
-
     def __init__(self):
-        self.a = []  # an instance attribute
+        self.SetterMode = 0  # an instance attribute
+        self.SetterKp = 0.0  # an instance attribute
+        self.SetterKi = 0.0  # an instance attribute
+        self.SetterKd = 0.0  # an instance attribute
+        self.SetterMaxWindow = 1250.0  # an instance attribute
+        self.SetterMinWindow = 100.0
 
 
 class structSettingsRX(object):
-    SetterMode = 0
-    SetterKp = 0.0
-    SetterKi = 0.0
-    SetterKd = 0.0
-    SetterMaxWindow = 0.0
-    SetterMinWindow = 0.0
-    SetterPIDWindow = 0.0
-    SetterWindow = 0.0
-    SetterTemperatureAverage = 0.0
-    SetterDHTTemperature = 0.0
-    SetterDHTHumidity = 0.0
-    SetterSCD30Temperature = 0.0
-    SetterSCD30Humidity = 0.0
-    SetterSCD30CO2 = 0.0
-    SetterDS1Temperature = 0.0
-    SetterDS2Temperature = 0.0
-    SetterErrorCount = 0.0
-    HatcherDS1Temperature = 0.0
+    def __init__(self):
+        self.SetterMode = 0
+        self.SetterKp = 0.0
+        self.SetterKi = 0.0
+        self.SetterKd = 0.0
+        self.SetterMaxWindow = 0.0
+        self.SetterMinWindow = 0.0
+        self.SetterPIDWindow = 0.0
+        self.SetterWindow = 0.0
+        self.SetterTemperatureAverage = 0.0
+        self.SetterDHTTemperature = 0.0
+        self.SetterDHTHumidity = 0.0
+        self.SetterSCD30Temperature = 0.0
+        self.SetterSCD30Humidity = 0.0
+        self.SetterSCD30CO2 = 0.0
+        self.SetterDS1Temperature = 0.0
+        self.SetterDS2Temperature = 0.0
+        self.SetterErrorCount = 0.0
+        self.HatcherDS1Temperature = 0.0
 
+setterTX = structSettingsTX()
+setterRX = structSettingsRX()
 
 def callback(client, result, extra):
     logging.info("Settings update received")
@@ -53,50 +52,53 @@ def callback(client, result, extra):
         logging.info(msg="Settings updated for : " + key)
 
 def updateSettings(key, value):
+    global setterTX
     if key.__contains__("Mode"):
-        setattr(structSettingsTX, key, int(value))
+        setattr(setterTX, key, int(value))
         logging.info("Settings for mode adjusted")
     else:
-        setattr(structSettingsTX, key, float(value))
+        setattr(setterTX, key, float(value))
         logging.info(msg="Settings for " + str(key) + " to value: " + str(value))
-    writeSettings(structSettingsTX)
+    writeSettings()
 
-def writeSettings(object_to_save):
+def writeSettings():
+    global setterTX
     with open('SetterSettings.ini', 'wb') as output:
-        pickle.dump(object_to_save, output, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(setterTX, output)
     logging.info("Settings saved")
 
 def readSettings():
     with open('SetterSettings.ini', 'rb') as input:
-        p = pickle.load(input)
+        p = pickle.loads(input)
     return p
 
 def pushData(client, timer):
     global pushTimer
+    global setterRX
     if (time.time() - pushTimer > timer):
         pushTimer = time.time()
         client.request_attributes()
         client.send_telemetry(
                                 {"ts": int(round(time.time() * 1000)),
                                   "values": {
-                                      "Setter Mode": structSettingsRX.SetterMode,
-                                      "Setter Max Window":structSettingsRX.SetterMaxWindow,
-                                      "Setter Min Window": structSettingsRX.SetterMinWindow,
-                                      "Setter PID Window": structSettingsRX.SetterPIDWindow,
-                                      "Setter Window": structSettingsRX.SetterWindow,
-                                      "Setter Temperature Average": structSettingsRX.SetterTemperatureAverage,
-                                      "Setter Temperature DHT22": structSettingsRX.SetterDHTTemperature,
-                                      "Setter Humidity DHT22": structSettingsRX.SetterDHTHumidity,
-                                      "Setter Temperature SCD30": structSettingsRX.SetterSCD30Temperature,
-                                      "Setter Humidity SCD30": structSettingsRX.SetterSCD30Humidity,
-                                      "Setter CO2 SCD30": structSettingsRX.SetterSCD30CO2,
-                                      "Setter Temperature DS18 1": structSettingsRX.SetterDS1Temperature,
-                                      "Setter Temperature DS18 2": structSettingsRX.SetterDS2Temperature,
-                                      "Setter Kp": structSettingsRX.SetterKp,
-                                      "Setter Ki": structSettingsRX.SetterKi,
-                                      "Setter Kd": structSettingsRX.SetterKd,
-                                      "Setter Error Count": structSettingsRX.SetterErrorCount,
-                                      "Hatcher Temperature DS18 Extra": structSettingsRX.HatcherDS1Temperature
+                                      "Setter Mode": setterRX.SetterMode,
+                                      "Setter Max Window":setterRX.SetterMaxWindow,
+                                      "Setter Min Window": setterRX.SetterMinWindow,
+                                      "Setter PID Window": setterRX.SetterPIDWindow,
+                                      "Setter Window": setterRX.SetterWindow,
+                                      "Setter Temperature Average": setterRX.SetterTemperatureAverage,
+                                      "Setter Temperature DHT22": setterRX.SetterDHTTemperature,
+                                      "Setter Humidity DHT22": setterRX.SetterDHTHumidity,
+                                      "Setter Temperature SCD30": setterRX.SetterSCD30Temperature,
+                                      "Setter Humidity SCD30": setterRX.SetterSCD30Humidity,
+                                      "Setter CO2 SCD30": setterRX.SetterSCD30CO2,
+                                      "Setter Temperature DS18 1": setterRX.SetterDS1Temperature,
+                                      "Setter Temperature DS18 2": setterRX.SetterDS2Temperature,
+                                      "Setter Kp": setterRX.SetterKp,
+                                      "Setter Ki": setterRX.SetterKi,
+                                      "Setter Kd": setterRX.SetterKd,
+                                      "Setter Error Count": setterRX.SetterErrorCount,
+                                      "Hatcher Temperature DS18 Extra": setterRX.HatcherDS1Temperature
                                     }
                                 }
                             )
@@ -104,14 +106,16 @@ def pushData(client, timer):
 
 def main():
 
+    global SetterRX
+    global SetterTX
+
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
+
         client = TBDeviceMqttClient(host, "MetUfDYMrXno9RKiiGl7")
-        #client = TBDeviceMqttClient(host, "8bkAvBZ5JS8aqCM0qQ4j")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
-
 
         link = txfer.SerialTransfer(port)
         link.open()
@@ -119,102 +123,108 @@ def main():
         time.sleep(2)
 
         # Read last saved settings
-        structSettingsTX = readSettings()
+        if os.path.exists("SetterSettings.ini"):
+            setterTX = readSettings()
+        else:
+            setterTX = structSettingsTX()
+
+        setterRX = structSettingsRX()
+
         logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
-            structSettingsTX.SetterMode,
-            structSettingsTX.SetterKp,
-            structSettingsTX.SetterKi,
-            structSettingsTX.SetterKd,
-            structSettingsTX.SetterMaxWindow,
-            structSettingsTX.SetterMinWindow
+            setterTX.SetterMode,
+            setterTX.SetterKp,
+            setterTX.SetterKi,
+            setterTX.SetterKd,
+            setterTX.SetterMaxWindow,
+            setterTX.SetterMinWindow
             )
         )
         logging.info("Setup OK")
-        while True:
+        while False:
             sendSize = 0
-            sendSize = link.tx_obj(structSettingsTX.SetterMode, start_pos=sendSize, val_type_override="B")
-            sendSize = link.tx_obj(structSettingsTX.SetterKp, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.SetterKi, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.SetterKd, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.SetterMaxWindow, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.SetterMinWindow, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.SetterMode, start_pos=sendSize, val_type_override="B")
+            sendSize = link.tx_obj(setterTX.SetterKp, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.SetterKi, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.SetterKd, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.SetterMaxWindow, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.SetterMinWindow, start_pos=sendSize, val_type_override="f")
             link.send(sendSize)
             if link.available():
                 recSize = 0
                 logging.info("Starting RX")
-                structSettingsRX.SetterMode = link.rx_obj(obj_type='b', start_pos=recSize)
+                setterRX.SetterMode = link.rx_obj(obj_type='b', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['B']
 
-                structSettingsRX.SetterKp = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterKp = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterKi = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterKi = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterKd = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterKd = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterMaxWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterMaxWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterMinWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterMinWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDHTTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterDHTTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDHTHumidity = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterDHTHumidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterTemperatureAverage = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterTemperatureAverage = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterSCD30Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterSCD30Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterSCD30Humidity = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterSCD30Humidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterSCD30CO2 = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterSCD30CO2 = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDS2Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterDS2Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 pushData(client = client, timer=300)
                 logging.info(msg = 'RX|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
-                    structSettingsRX.SetterMode,
-                    structSettingsRX.SetterKp,
-                    structSettingsRX.SetterKi,
-                    structSettingsRX.SetterKd,
-                    structSettingsRX.SetterMaxWindow,
-                    structSettingsRX.SetterMinWindow,
-                    structSettingsRX.SetterWindow,
-                    structSettingsRX.SetterTemperatureAverage,
-                    structSettingsRX.SetterDHTTemperature,
-                    structSettingsRX.SetterDHTHumidity,
-                    structSettingsRX.SetterSCD30Temperature,
-                    structSettingsRX.SetterSCD30Humidity,
-                    structSettingsRX.SetterSCD30CO2,
-                    structSettingsRX.SetterDS1Temperature,
-                    structSettingsRX.SetterDS2Temperature,
-                    structSettingsRX.SetterErrorCount,
-                    structSettingsRX.HatcherDS1Temperature
+                    setterRX.SetterMode,
+                    setterRX.SetterKp,
+                    setterRX.SetterKi,
+                    setterRX.SetterKd,
+                    setterRX.SetterMaxWindow,
+                    setterRX.SetterMinWindow,
+                    setterRX.SetterWindow,
+                    setterRX.SetterTemperatureAverage,
+                    setterRX.SetterDHTTemperature,
+                    setterRX.SetterDHTHumidity,
+                    setterRX.SetterSCD30Temperature,
+                    setterRX.SetterSCD30Humidity,
+                    setterRX.SetterSCD30CO2,
+                    setterRX.SetterDS1Temperature,
+                    setterRX.SetterDS2Temperature,
+                    setterRX.SetterErrorCount,
+                    setterRX.HatcherDS1Temperature
                     )
                 )
 
