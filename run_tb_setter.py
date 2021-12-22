@@ -105,8 +105,8 @@ def pushData(client, timer, pushrx):
 
 def main():
 
-    global SetterRX
-    global SetterTX
+    global setterRX
+    global setterTX
 
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want

@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-import time
 from pySerialTransfer import pySerialTransfer as txfer
 from tb_gateway_mqtt import TBDeviceMqttClient
-import logging
-import pickle
-import sys
+import sys, json, codecs, os, time, logging, pickle
 
 pushTimer = time.time()
 
@@ -13,43 +10,39 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 class structSettingsTX(object):
-    HatcherMode = 0
-    HatcherKp = 0.0
-    HatcherKi = 0.0
-    HatcherKd = 0.0
-    HatcherMaxWindow = 1250.0
-    HatcherMinWindow = 100.0
+    def __init__(self):
+        self.HatcherMode = 0
+        self.HatcherKp = 0.0
+        self.HatcherKi = 0.0
+        self.HatcherKd = 0.0
+        self.HatcherMaxWindow = 1250.0
+        self.HatcherMinWindow = 100.0
 
-def writeSettings(object_to_save):
-    with open('HatcherSettings.ini', 'wb') as output:
-        pickle.dump(object_to_save, output, pickle.HIGHEST_PROTOCOL)
-    logging.info("Settings saved")
-
-def readSettings():
-    with open('HatcherSettings.ini', 'rb') as input:
-        p = pickle.load(input)
-    return p
 
 class structSettingsRX(object):
-    HatcherMode = 0
-    HatcherKp = 0.0
-    HatcherKi = 0.0
-    HatcherKd = 0.0
-    HatcherMaxWindow = 0.0
-    HatcherMinWindow = 0.0
-    HatcherPIDWindow = 0.0
-    HatcherWindow = 0.0
-    HatcherIntDSTempAverage = 0.0
-    HatcherIntDSTemperature = 0.0
-    HatcherIntDSErrorCount = 0.0
-    HatcherExtDSTempAverage = 0.0
-    HatcherExtDSTemperature = 0.0
-    HatcherExtDSErrorCount = 0.0
-    HatcherSCD30Temperature = 0.0
-    HatcherSCD30Humidity = 0.0
-    HatcherSCD30CO2 = 0.0
-    SetterDSTemperature = 0.0
+    def __init__(self):
+        self.HatcherMode = 0
+        self.HatcherKp = 0.0
+        self.HatcherKi = 0.0
+        self.HatcherKd = 0.0
+        self.HatcherMaxWindow = 0.0
+        self.HatcherMinWindow = 0.0
+        self.HatcherPIDWindow = 0.0
+        self.HatcherWindow = 0.0
+        self.HatcherIntDSTempAverage = 0.0
+        self.HatcherIntDSTemperature = 0.0
+        self.HatcherIntDSErrorCount = 0.0
+        self.HatcherExtDSTempAverage = 0.0
+        self.HatcherExtDSTemperature = 0.0
+        self.HatcherExtDSErrorCount = 0.0
+        self.HatcherSCD30Temperature = 0.0
+        self.HatcherSCD30Humidity = 0.0
+        self.HatcherSCD30CO2 = 0.0
+        self.SetterDSTemperature = 0.0
 
+
+setterTX = structSettingsTX()
+setterRX = structSettingsRX()
 
 def callback(client, result, extra):
     logging.info("Settings update received")
@@ -59,15 +52,27 @@ def callback(client, result, extra):
         logging.info(msg="Settings updated for : " + key)
 
 def updateSettings(key, value):
+    global setterTX
     if key.__contains__("Mode"):
-        setattr(structSettingsTX, key, int(value))
+        setattr(setterTX, key, int(value))
         logging.info("Settings for mode adjusted")
     else:
-        setattr(structSettingsTX, key, float(value))
+        setattr(setterTX, key, float(value))
         logging.info(msg="Settings for " + str(key) + " to value: " + str(value))
-    writeSettings(structSettingsTX)
+    writeSettings()
 
-def pushData(client, timer):
+def writeSettings(object_to_save):
+    global setterTX
+    with open('HatcherSettings.ini', 'wb') as output:
+        pickle.dump(setterTX, output)
+    logging.info("Settings saved")
+
+def readSettings():
+    with open('HatcherSettings.ini', 'rb') as input:
+        p = pickle.load(input)
+    return p
+
+def pushData(client, timer, pushrx):
     global pushTimer
     if (time.time() - pushTimer > timer):
         pushTimer = time.time()
@@ -75,24 +80,24 @@ def pushData(client, timer):
         client.send_telemetry(
                                 {"ts": int(round(time.time() * 1000)),
                                   "values": {
-                                      "Hatcher Mode": structSettingsRX.HatcherMode,
-                                      "Hatcher Kp": structSettingsRX.HatcherKp,
-                                      "Hatcher Ki": structSettingsRX.HatcherKi,
-                                      "Hatcher Kd": structSettingsRX.HatcherKd,
-                                      "Hatcher Max Window":structSettingsRX.HatcherMaxWindow,
-                                      "Hatcher Min Window": structSettingsRX.HatcherMinWindow,
-                                      "Hatcher PID Window": structSettingsRX.HatcherPIDWindow,
-                                      "Hatcher Window": structSettingsRX.HatcherWindow,
-                                      "Hatcher Internal Temperature Average": structSettingsRX.HatcherIntDSTempAverage,
-                                      "Hatcher Internal Temperature DS18": structSettingsRX.HatcherIntDSTemperature,
-                                      "Hatcher Internal Error Count": structSettingsRX.HatcherIntDSErrorCount,
-                                      "Hatcher External Temperature Average": structSettingsRX.HatcherExtDSTempAverage,
-                                      "Hatcher External Temperature DS18": structSettingsRX.HatcherExtDSTemperature,
-                                      "Hatcher External Error Count": structSettingsRX.HatcherExtDSErrorCount,
-                                      "Hatcher Temperature SCD30": structSettingsRX.HatcherSCD30Temperature,
-                                      "Hatcher Humidity SCD30": structSettingsRX.HatcherSCD30Humidity,
-                                      "Hatcher CO2 SCD30": structSettingsRX.HatcherSCD30CO2,
-                                      "Setter Temperature DS18 Extra": structSettingsRX.SetterDSTemperature
+                                      "Hatcher Mode": pushrx.HatcherMode,
+                                      "Hatcher Kp": pushrx.HatcherKp,
+                                      "Hatcher Ki": pushrx.HatcherKi,
+                                      "Hatcher Kd": pushrx.HatcherKd,
+                                      "Hatcher Max Window":pushrx.HatcherMaxWindow,
+                                      "Hatcher Min Window": pushrx.HatcherMinWindow,
+                                      "Hatcher PID Window": pushrx.HatcherPIDWindow,
+                                      "Hatcher Window": pushrx.HatcherWindow,
+                                      "Hatcher Internal Temperature Average": pushrx.HatcherIntDSTempAverage,
+                                      "Hatcher Internal Temperature DS18": pushrx.HatcherIntDSTemperature,
+                                      "Hatcher Internal Error Count": pushrx.HatcherIntDSErrorCount,
+                                      "Hatcher External Temperature Average": pushrx.HatcherExtDSTempAverage,
+                                      "Hatcher External Temperature DS18": pushrx.HatcherExtDSTemperature,
+                                      "Hatcher External Error Count": pushrx.HatcherExtDSErrorCount,
+                                      "Hatcher Temperature SCD30": pushrx.HatcherSCD30Temperature,
+                                      "Hatcher Humidity SCD30": pushrx.HatcherSCD30Humidity,
+                                      "Hatcher CO2 SCD30": pushrx.HatcherSCD30CO2,
+                                      "Setter Temperature DS18 Extra": pushrx.SetterDSTemperature
                                     }
                                 }
                             )
@@ -100,9 +105,13 @@ def pushData(client, timer):
 
 def main():
 
+    global setterRX
+    global setterTX
+
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
+
         client = TBDeviceMqttClient(host, "9aqkgXRwb56wOks7miIv")
         client.connect()
         client.subscribe_to_all_attributes(callback=callback)
@@ -113,94 +122,107 @@ def main():
         time.sleep(2)
 
         # Read last saved settings
-        structSettingsTX = readSettings()
+        if os.path.exists("HatcherSettings.ini"):
+            setterTX = readSettings()
+        else:
+            setterTX = structSettingsTX()
+        setterRX = structSettingsRX()
 
+        logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
+            setterTX.SetterMode,
+            setterTX.SetterKp,
+            setterTX.SetterKi,
+            setterTX.SetterKd,
+            setterTX.SetterMaxWindow,
+            setterTX.SetterMinWindow
+            )
+        )
         logging.info("Setup OK")
         while True:
             sendSize = 0
-            sendSize = link.tx_obj(structSettingsTX.HatcherMode, start_pos=sendSize, val_type_override="B")
-            sendSize = link.tx_obj(structSettingsTX.HatcherKp, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.HatcherKi, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.HatcherKd, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.HatcherMaxWindow, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(structSettingsTX.HatcherMinWindow, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherMode, start_pos=sendSize, val_type_override="B")
+            sendSize = link.tx_obj(setterTX.HatcherKp, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherKi, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherKd, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherMaxWindow, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherMinWindow, start_pos=sendSize, val_type_override="f")
             link.send(sendSize)
             if link.available():
                 recSize = 0
                 logging.info("Starting RX")
-                structSettingsRX.HatcherMode = link.rx_obj(obj_type='b', start_pos=recSize)
+                setterRX.HatcherMode = link.rx_obj(obj_type='b', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['B']
 
-                structSettingsRX.HatcherKp = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherKp = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherKi = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherKi = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherKd = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherKd = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherMaxWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherMaxWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherMinWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherMinWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherWindow = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherIntDSTempAverage = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherIntDSTempAverage = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherIntDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherIntDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherIntDSErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherIntDSErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherExtDSTempAverage = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherExtDSTempAverage = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherExtDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherExtDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherExtDSErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherExtDSErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherSCD30Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherSCD30Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherSCD30Humidity = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherSCD30Humidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.HatcherSCD30CO2 = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherSCD30CO2 = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.SetterDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=300)
+                pushData(client = client, timer=300, pushrx = setterRX)
                 logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
-                    structSettingsRX.HatcherMode,
-                    structSettingsRX.HatcherKp,
-                    structSettingsRX.HatcherKi,
-                    structSettingsRX.HatcherKd,
-                    structSettingsRX.HatcherMaxWindow,
-                    structSettingsRX.HatcherMinWindow,
-                    structSettingsRX.HatcherWindow,
-                    structSettingsRX.HatcherIntDSTempAverage,
-                    structSettingsRX.HatcherIntDSTemperature,
-                    structSettingsRX.HatcherIntDSErrorCount,
-                    structSettingsRX.HatcherExtDSTempAverage,
-                    structSettingsRX.HatcherExtDSTemperature,
-                    structSettingsRX.HatcherExtDSErrorCount,
-                    structSettingsRX.HatcherSCD30Temperature,
-                    structSettingsRX.HatcherSCD30Humidity,
-                    structSettingsRX.HatcherSCD30CO2,
-                    structSettingsRX.SetterDSTemperature
+                    setterRX.HatcherMode,
+                    setterRX.HatcherKp,
+                    setterRX.HatcherKi,
+                    setterRX.HatcherKd,
+                    setterRX.HatcherMaxWindow,
+                    setterRX.HatcherMinWindow,
+                    setterRX.HatcherWindow,
+                    setterRX.HatcherIntDSTempAverage,
+                    setterRX.HatcherIntDSTemperature,
+                    setterRX.HatcherIntDSErrorCount,
+                    setterRX.HatcherExtDSTempAverage,
+                    setterRX.HatcherExtDSTemperature,
+                    setterRX.HatcherExtDSErrorCount,
+                    setterRX.HatcherSCD30Temperature,
+                    setterRX.HatcherSCD30Humidity,
+                    setterRX.HatcherSCD30CO2,
+                    setterRX.SetterDSTemperature
                     )
                 )
 
