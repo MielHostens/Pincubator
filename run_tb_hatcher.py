@@ -129,12 +129,12 @@ def main():
         setterRX = structSettingsRX()
 
         logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
-            setterTX.SetterMode,
-            setterTX.SetterKp,
-            setterTX.SetterKi,
-            setterTX.SetterKd,
-            setterTX.SetterMaxWindow,
-            setterTX.SetterMinWindow
+            setterTX.HatcherMode,
+            setterTX.HatcherKp,
+            setterTX.HatcherKi,
+            setterTX.HatcherKd,
+            setterTX.HatcherMaxWindow,
+            setterTX.HatcherMinWindow
             )
         )
         logging.info("Setup OK")
