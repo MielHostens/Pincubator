@@ -117,6 +117,7 @@ def start(update: Update, context: CallbackContext) -> None:
 
 def setter(update: Update, context: CallbackContext) -> None:
     global setterRX
+    global LastSerial
     """Send a message when the command /start is issued."""
     datediff = datetime.datetime.now() - LastSerial
     user = update.effective_user
@@ -125,7 +126,7 @@ def setter(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(fr'That was {round(datediff.total_seconds(), 0)} seconds ago')
     update.message.reply_text(fr'My temperature currently is {round(setterRX.SetterTemperatureAverage,1)} °C')
     update.message.reply_text(fr'My humidity currently is {round(setterRX.SetterSCD30Humidity, 1)} %')
-
+    LastSerial = datetime.datetime.now()
     update.message.reply_markdown_v2(
         fr'Thanks for asking {user.mention_markdown_v2()}\! Anything else wanted?',
         reply_markup=ForceReply(selective=True),
