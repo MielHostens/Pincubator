@@ -7,6 +7,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 pushTimer = time.time()
 LastSerial = datetime.datetime.now()
+AlarmTimer = time.time()
+Alarm = 0
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
@@ -55,6 +57,10 @@ def callback(client, result, extra):
 
 def updateSettings(key, value):
     global setterTX
+    global Alarm
+    if key.__contains__("Alarm"):
+        Alarm = value
+        logging.info("Alarm mode changed")
     if key.__contains__("Mode"):
         setattr(setterTX, key, int(value))
         logging.info("Settings for mode adjusted")
@@ -73,6 +79,21 @@ def readSettings():
     with open('SetterSettings.ini', 'rb') as input:
         p = pickle.load(input)
     return p
+
+def telegramAlarm(update, timer, pushrx)
+    global AlarmTimer
+    global Alarm
+    if (time.time() - AlarmTimer > timer):
+        AlarmTimer = time.time()
+        if Alarm == 1:
+            if pushrx.SetterTemperatureAverage < 36.0:
+                update.message.reply_text("Setter temperature < 36.0°C")
+            elif pushrx.SetterTemperatureAverage > 38.5:
+                update.message.reply_text("Setter temperature > 38.5°C")
+            if pushrx.HatcherDS1Temperature < 36.0:
+                update.message.reply_text("Hatcher temperature < 36.0°C")
+            elif pushrx.HatcherDS1Temperature > 38.5:
+                update.message.reply_text("Hatcher temperature > 38.5°C")
 
 def pushData(client, timer, pushrx):
     global pushTimer
@@ -126,7 +147,6 @@ def setter(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(fr'That was {round(datediff.total_seconds(), 0)} seconds ago')
     update.message.reply_text(fr'My temperature currently is {round(setterRX.SetterTemperatureAverage,1)} °C')
     update.message.reply_text(fr'My humidity currently is {round(setterRX.SetterSCD30Humidity, 1)} %')
-    LastSerial = datetime.datetime.now()
     update.message.reply_markdown_v2(
         fr'Thanks for asking {user.mention_markdown_v2()}\! Anything else wanted?',
         reply_markup=ForceReply(selective=True),
@@ -134,12 +154,12 @@ def setter(update: Update, context: CallbackContext) -> None:
 
 def hatcher(update: Update, context: CallbackContext) -> None:
     global setterRX
+    global LastSerial
     """Send a message when the command /start is issued."""
     user = update.effective_user
     update.message.reply_text(fr'Hi {user.first_name}, this is your SETTER replying')
     update.message.reply_text(fr'My last serial communication with arduino was at {LastSerial}')
     update.message.reply_text(fr'The HATCHER temperature currently is {round(setterRX.HatcherDS1Temperature, 1)} °C')
-
     update.message.reply_markdown_v2(
         fr'Thanks for asking {user.mention_markdown_v2()}\! Anything else wanted?',
         reply_markup=ForceReply(selective=True),
@@ -158,6 +178,7 @@ def main():
 
     global setterRX
     global setterTX
+    global LastSerial
 
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
@@ -216,6 +237,8 @@ def main():
 
         logging.info("Setup OK")
         while True:
+            # Check for alarm and set
+            telegramAlarm(update=updater, timer=300, pushrx=setterRX)
             sendSize = 0
             sendSize = link.tx_obj(setterTX.SetterMode, start_pos=sendSize, val_type_override="B")
             sendSize = link.tx_obj(setterTX.SetterKp, start_pos=sendSize, val_type_override="f")
@@ -282,6 +305,7 @@ def main():
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 pushData(client = client, timer=300, pushrx = setterRX)
+                LastSerial = datetime.datetime.now()
                 logging.info(msg = 'RX'
                                    'Setter Mode {}'
                                    '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
