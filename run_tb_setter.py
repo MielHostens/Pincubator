@@ -140,7 +140,7 @@ def main():
             )
         )
         logging.info("Setup OK")
-        while False:
+        while True:
             sendSize = 0
             sendSize = link.tx_obj(setterTX.SetterMode, start_pos=sendSize, val_type_override="B")
             sendSize = link.tx_obj(setterTX.SetterKp, start_pos=sendSize, val_type_override="f")
