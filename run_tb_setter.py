@@ -20,15 +20,6 @@ class structSettingsTX(object):
     SetterMaxWindow = 1250.0
     SetterMinWindow = 100.0
 
-def writeSettings(object_to_save):
-    with open('SetterSettings.ini', 'wb') as output:
-        pickle.dump(object_to_save, output, pickle.HIGHEST_PROTOCOL)
-    logging.info("Settings saved")
-
-def readSettings():
-    with open('SetterSettings.ini', 'rb') as input:
-        p = pickle.load(input)
-    return p
 
 class structSettingsRX(object):
     SetterMode = 0
@@ -66,6 +57,16 @@ def updateSettings(key, value):
         setattr(structSettingsTX, key, float(value))
         logging.info(msg="Settings for " + str(key) + " to value: " + str(value))
     writeSettings(structSettingsTX)
+
+def writeSettings(object_to_save):
+    with open('SetterSettings.ini', 'wb') as output:
+        pickle.dump(object_to_save, output, pickle.HIGHEST_PROTOCOL)
+    logging.info("Settings saved")
+
+def readSettings():
+    with open('SetterSettings.ini', 'rb') as input:
+        p = pickle.load(input)
+    return p
 
 def pushData(client, timer):
     global pushTimer
@@ -116,7 +117,15 @@ def main():
 
         # Read last saved settings
         structSettingsTX = readSettings()
-
+        logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
+            structSettingsTX.SetterMode,
+            structSettingsTX.SetterKp,
+            structSettingsTX.SetterKi,
+            structSettingsTX.SetterKd,
+            structSettingsTX.SetterMaxWindow,
+            structSettingsTX.SetterMinWindow
+            )
+        )
         logging.info("Setup OK")
         while True:
             sendSize = 0
