@@ -125,7 +125,6 @@ def setter(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(fr'That was {round(datediff.total_seconds(), 0)} seconds ago')
     update.message.reply_text(fr'My temperature currently is {round(setterRX.SetterTemperatureAverage,1)} °C')
     update.message.reply_text(fr'My humidity currently is {round(setterRX.SetterSCD30Humidity, 1)} %')
-    update.message.reply_text(fr'The HATCHER temperature currently is {round(setterRX.HatcherDS1Temperature, 1)} °C')
 
     update.message.reply_markdown_v2(
         fr'Thanks for asking {user.mention_markdown_v2()}\! Anything else wanted?',
@@ -135,7 +134,6 @@ def setter(update: Update, context: CallbackContext) -> None:
 def hatcher(update: Update, context: CallbackContext) -> None:
     global setterRX
     """Send a message when the command /start is issued."""
-    datediff = datetime.datetime.now() - LastSerial
     user = update.effective_user
     update.message.reply_text(fr'Hi {user.first_name}, this is your SETTER replying')
     update.message.reply_text(fr'My last serial communication with arduino was at {LastSerial}')
