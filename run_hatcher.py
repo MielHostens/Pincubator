@@ -183,6 +183,32 @@ def main():
             hatcherTX.HatcherTempTargetIntHumidity
             )
         )
+
+        ## Telegram
+        """Start the bot."""
+        # Create the Updater and pass it your bot's token.
+        updater = Updater("5038308156:AAE7SJQUj2aA-3lXId-gWZnpHb1612gTKQw")
+
+        # Get the dispatcher to register handlers
+        dispatcher = updater.dispatcher
+
+        # on different commands - answer in Telegram
+        dispatcher.add_handler(CommandHandler("start", start))
+        dispatcher.add_handler(CommandHandler("help", help_command))
+        dispatcher.add_handler(CommandHandler("setter", setter))
+        dispatcher.add_handler(CommandHandler("hatcher", hatcher))
+
+        # on non command i.e message - echo the message on Telegram
+        dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+        # Start the Bot
+        updater.start_polling()
+
+        # Run the bot until you press Ctrl-C or the process receives SIGINT,
+        # SIGTERM or SIGABRT. This should be used most of the time, since
+        # start_polling() is non-blocking and will stop the bot gracefully.
+        # updater.idle()
+
         logging.info("Setup OK")
         while True:
             sendSize = 0
