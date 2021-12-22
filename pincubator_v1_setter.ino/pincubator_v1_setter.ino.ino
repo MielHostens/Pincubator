@@ -40,7 +40,7 @@ DHT SetterDHT(SetterPinDHT, DHTType); //// Initialize DHT sensor for normal 16mh
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWireSetterDS1(SetterPinDS1);
 OneWire oneWireSetterDS2(SetterPinDS2);
-OneWire oneWireHatcherDS1(SetterPinDS2);
+OneWire oneWireHatcherDS1(HatcherPinDS1);
 
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature SetterDS1(&oneWireSetterDS1);
@@ -68,9 +68,9 @@ int SetterTargetCO2 = 5000; //Max ppm
 // ************************************************
 //DHT Smoothing
 const int numReadings = 60;
-double SetterDHTReadings[numReadings];      // the readings from the analog input
-int SetterDHTTempReadIndex = 0;              // the index of the current reading
-double SetterDHTTempTotal = 0.0;                  // the running total
+double SetterReadings[numReadings];      // the readings from the analog input
+int SetterTempReadIndex = 0;              // the index of the current reading
+double SetterTempTotal = 0.0;                  // the running total
 
 // ************************************************
 // Timers
@@ -88,32 +88,32 @@ unsigned long RxTxTimer = 28000;
 // **************************************************************
 
 struct STRUCTRX {
-  byte SetterMode = 1;
-  double SetterKp = 0.0;
+  byte SetterMode = 3;
+  double SetterKp = 750.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 1250.0;
-  double SetterMinWindow = 1000.0;
+  double SetterMaxWindow = 2000.0;
+  double SetterMinWindow = 100.0;
 } settingsStructRX;
 
 struct STRUCT {
-  byte SetterMode = 1;
-  double SetterKp = 0.0;
+  byte SetterMode = 3;
+  double SetterKp = 750.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 0.0;
-  double SetterMinWindow = 0.0;
+  double SetterMaxWindow = 2000.0;
+  double SetterMinWindow = 100.0;
   double SetterPIDWindow = 0.0;
   double SetterWindow = 0.0;
   double SetterDHTTemperature = 0.0;
   double SetterDHTHumidity = 0.0;
-  double SetterDHTTemperatureAverage = 0.0;
+  double SetterTemperatureAverage = 0.0;
   double SetterSCD30Temperature = 0.0;
   double SetterSCD30Humidity = 0.0;
   double SetterSCD30CO2 = 0.0;
   double SetterDS1Temperature = 0.0;
   double SetterDS2Temperature = 0.0;
-  double SetterDHTErrorCount = 0;
+  double SetterErrorCount = 0;
   double HatcherDS1Temperature = 0.0;
 } settingsStruct;
 
@@ -123,7 +123,7 @@ struct STRUCT {
 
 //Specify the links and initial tuning parameters
 PID mySetterPID(
-  &settingsStruct.SetterDHTTemperatureAverage, 
+  &settingsStruct.SetterTemperatureAverage, 
   &settingsStruct.SetterPIDWindow, 
   &SetterTargetTemperature, 
   settingsStruct.SetterKp, 
@@ -181,7 +181,7 @@ void setup()
   // * SMOOTHERS
   // ***************************************************************/
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
-    SetterDHTReadings[thisReading] = 0.0;
+    SetterReadings[thisReading] = 0.0;
   }
 
   // **************************************************************
@@ -241,10 +241,10 @@ void SerialSend(unsigned long interval) {
     Serial.print("SetterMaxWindow: ");Serial.println(settingsStruct.SetterMaxWindow);
     Serial.print("SetterMinWindow: ");Serial.println(settingsStruct.SetterMinWindow);
     Serial.print("SetterWindow: ");Serial.println(settingsStruct.SetterWindow);
-    Serial.print("SetterDHTTemperatureAverage: ");Serial.println(settingsStruct.SetterDHTTemperatureAverage);
+    Serial.print("SetterTemperatureAverage: ");Serial.println(settingsStruct.SetterTemperatureAverage);
     Serial.print("SetterDHTTemperature: ");Serial.println(settingsStruct.SetterDHTTemperature);
     Serial.print("SetterDHTHumidity: ");Serial.println(settingsStruct.SetterDHTHumidity);
-    Serial.print("SetterDHTErrorCount: ");Serial.println(settingsStruct.SetterDHTErrorCount);    
+    Serial.print("SetterErrorCount: ");Serial.println(settingsStruct.SetterErrorCount);    
     Serial.print("SetterSCD30Temperature: ");Serial.println(settingsStruct.SetterSCD30Temperature);
     Serial.print("SetterSCD30Humidity: ");Serial.println(settingsStruct.SetterSCD30Humidity);
     Serial.print("SetterSCD30CO2: ");Serial.println(settingsStruct.SetterSCD30CO2);
@@ -311,19 +311,19 @@ void SetterPIDAdjustTemperatureWindow() {
 }
 
 void SetterStepAdjustTemperatureWindow() {
-  if ((settingsStruct.SetterDHTTemperatureAverage > (SetterTargetTemperature + 0.15)))
+  if ((settingsStruct.SetterTemperatureAverage > (SetterTargetTemperature + 0.2)))
   {
     settingsStruct.SetterWindow -= 2.0;
   }
-  else if ((settingsStruct.SetterDHTTemperatureAverage > (SetterTargetTemperature + 0.1)))
+  else if ((settingsStruct.SetterTemperatureAverage > (SetterTargetTemperature + 0.1)))
   {
     settingsStruct.SetterWindow -= 1.0;
   }
-  else if (settingsStruct.SetterDHTTemperatureAverage < (SetterTargetTemperature - 0.2))
+  else if (settingsStruct.SetterTemperatureAverage < (SetterTargetTemperature - 0.2))
   {
     settingsStruct.SetterWindow += 2.0;
   }
-  else if (settingsStruct.SetterDHTTemperatureAverage < (SetterTargetTemperature - 0.1))
+  else if (settingsStruct.SetterTemperatureAverage < (SetterTargetTemperature - 0.1))
   {
     settingsStruct.SetterWindow += 1.0;
   }
@@ -348,33 +348,30 @@ void SetterReadEssentialSensors(unsigned long interval) {
     SetterSensorEssentialTimer = millis(); //reset timer
       if (Simulator) {
           if (Debug) Serial.println("Using random values setter essential sensors");
-          settingsStruct.SetterDHTTemperature = random(370, 380) / 10.0;          
-          settingsStruct.SetterDHTHumidity = random(400, 500) / 10.0;
+          settingsStruct.SetterDS2Temperature = random(370, 380) / 10.0;
       } else {
           if (Debug) Serial.println("Using real values setter essential sensors");
-          double SetterDHTHumidityReading = SetterDHT.readHumidity();
-          double SetterDHTTemperatureReading = SetterDHT.readTemperature();          
-          if (isnan(SetterDHTTemperatureReading))
+          SetterDS1.requestTemperatures();
+          double SetterTemperatureReading = SetterDS1.getTempCByIndex(0);
+          if (isnan(SetterTemperatureReading))
             {
               if (Debug) Serial.println("Setter DHT error");
-              settingsStruct.SetterDHTErrorCount += 1;
-              SetterDHTTemperatureReading = settingsStruct.SetterSCD30Temperature; // BACKUP
-              SetterDHTHumidityReading = settingsStruct.SetterSCD30Humidity;
+              settingsStruct.SetterErrorCount += 1;
+              SetterTemperatureReading = settingsStruct.SetterDS2Temperature; // BACKUP
               //return; return statement takes it back
             }
           else {
-            settingsStruct.SetterDHTTemperature = SetterDHTTemperatureReading;
-            settingsStruct.SetterDHTHumidity = SetterDHTHumidityReading;            
+            settingsStruct.SetterDS1Temperature = SetterTemperatureReading;       
             }
-          SetterDHTTempTotal = SetterDHTTempTotal - SetterDHTReadings[SetterDHTTempReadIndex];// subtract the last reading:
-          SetterDHTReadings[SetterDHTTempReadIndex] = SetterDHTTemperatureReading;// read from the sensor:    
-          SetterDHTTempTotal = SetterDHTTempTotal + SetterDHTReadings[SetterDHTTempReadIndex];// add the reading to the total:
-          SetterDHTTempReadIndex = SetterDHTTempReadIndex + 1;// advance to the next position in the array:
-          if (SetterDHTTempReadIndex >= numReadings) {
+          SetterTempTotal = SetterTempTotal - SetterReadings[SetterTempReadIndex];// subtract the last reading:
+          SetterReadings[SetterTempReadIndex] = SetterTemperatureReading;// read from the sensor:    
+          SetterTempTotal = SetterTempTotal + SetterReadings[SetterTempReadIndex];// add the reading to the total:
+          SetterTempReadIndex = SetterTempReadIndex + 1;// advance to the next position in the array:
+          if (SetterTempReadIndex >= numReadings) {
             // ...wrap around to the beginning:
-            SetterDHTTempReadIndex = 0;
+            SetterTempReadIndex = 0;
           }
-          settingsStruct.SetterDHTTemperatureAverage = SetterDHTTempTotal / numReadings;// calculate the average:
+          settingsStruct.SetterTemperatureAverage = SetterTempTotal / numReadings;// calculate the average:
       }
   }
 }
@@ -390,16 +387,26 @@ void SetterReadSensors(unsigned long interval) {
           settingsStruct.SetterSCD30Temperature = random(370, 380) / 10.0;
           settingsStruct.SetterSCD30Humidity = random(400, 500) / 10.0;
           settingsStruct.SetterSCD30CO2 = random(500, 5000);
-          settingsStruct.SetterDS1Temperature = random(370, 380) / 10.0;
+          settingsStruct.SetterDHTTemperature = random(370, 380) / 10.0;
+          settingsStruct.SetterDHTHumidity = random(400, 500) / 10.0;
           settingsStruct.SetterDS2Temperature = random(370, 380) / 10.0;
           settingsStruct.HatcherDS1Temperature = random(370, 380) / 10.0;
           settingsStruct.SetterWindow = settingsStructRX.SetterMaxWindow;
       } else {
           if (Debug) Serial.println("Using real values setter sensors");
-          SetterDS1.requestTemperatures();
-          settingsStruct.SetterDS1Temperature = SetterDS1.getTempCByIndex(0);
+          double SetterTemperatureReading =  SetterDHT.readTemperature();
+          double SetterHumidityReading = SetterDHT.readTemperature();
+          if (isnan(SetterTemperatureReading))
+            {
+              if (Debug) Serial.println("Setter DHT error");
+              settingsStruct.SetterErrorCount += 1;
+            }
+          else {
+            settingsStruct.SetterDHTTemperature = SetterTemperatureReading;
+            settingsStruct.SetterDHTHumidity = SetterHumidityReading;      
+            }
           SetterDS2.requestTemperatures();
-          settingsStruct.SetterDS2Temperature = SetterDS2.getTempCByIndex(0);
+          settingsStruct.SetterDS2Temperature = SetterDS2.getTempCByIndex(0);          
           HatcherDS1.requestTemperatures();
           settingsStruct.HatcherDS1Temperature = HatcherDS1.getTempCByIndex(0); 
           scd30.read();
