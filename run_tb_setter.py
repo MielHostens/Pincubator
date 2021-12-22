@@ -69,7 +69,7 @@ def writeSettings():
 
 def readSettings():
     with open('SetterSettings.ini', 'rb') as input:
-        p = pickle.loads(input)
+        p = pickle.load(input)
     return p
 
 def pushData(client, timer, pushrx):
