@@ -20,7 +20,7 @@ class structSettingsTX(object):
 class structSettingsRX(object):
     def __init__(self):
         self.HatcherMode = 0
-        self.Hatchrun_tb_hatcher.pyerTempTargetExtTemperature = 0.0
+        self.HatcherTempTargetExtTemperature = 0.0
         self.HatcherTempTargetIntTemperature = 0.0
         self.HatcherTempTargetIntHumidity = 0.0
         self.HatcherTargetExtTemperature = 0.0
