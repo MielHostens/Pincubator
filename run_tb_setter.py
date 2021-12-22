@@ -20,6 +20,9 @@ class structSettingsTX(object):
     SetterMaxWindow = 1250.0
     SetterMinWindow = 100.0
 
+    def __init__(self):
+        self.a = []  # an instance attribute
+
 
 class structSettingsRX(object):
     SetterMode = 0
