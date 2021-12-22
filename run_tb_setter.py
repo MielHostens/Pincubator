@@ -72,33 +72,32 @@ def readSettings():
         p = pickle.loads(input)
     return p
 
-def pushData(client, timer):
+def pushData(client, timer, pushrx):
     global pushTimer
-    global setterRX
     if (time.time() - pushTimer > timer):
         pushTimer = time.time()
         client.request_attributes()
         client.send_telemetry(
                                 {"ts": int(round(time.time() * 1000)),
                                   "values": {
-                                      "Setter Mode": setterRX.SetterMode,
-                                      "Setter Max Window":setterRX.SetterMaxWindow,
-                                      "Setter Min Window": setterRX.SetterMinWindow,
-                                      "Setter PID Window": setterRX.SetterPIDWindow,
-                                      "Setter Window": setterRX.SetterWindow,
-                                      "Setter Temperature Average": setterRX.SetterTemperatureAverage,
-                                      "Setter Temperature DHT22": setterRX.SetterDHTTemperature,
-                                      "Setter Humidity DHT22": setterRX.SetterDHTHumidity,
-                                      "Setter Temperature SCD30": setterRX.SetterSCD30Temperature,
-                                      "Setter Humidity SCD30": setterRX.SetterSCD30Humidity,
-                                      "Setter CO2 SCD30": setterRX.SetterSCD30CO2,
-                                      "Setter Temperature DS18 1": setterRX.SetterDS1Temperature,
-                                      "Setter Temperature DS18 2": setterRX.SetterDS2Temperature,
-                                      "Setter Kp": setterRX.SetterKp,
-                                      "Setter Ki": setterRX.SetterKi,
-                                      "Setter Kd": setterRX.SetterKd,
-                                      "Setter Error Count": setterRX.SetterErrorCount,
-                                      "Hatcher Temperature DS18 Extra": setterRX.HatcherDS1Temperature
+                                      "Setter Mode": pushrx.SetterMode,
+                                      "Setter Max Window":pushrx.SetterMaxWindow,
+                                      "Setter Min Window": pushrx.SetterMinWindow,
+                                      "Setter PID Window": pushrx.SetterPIDWindow,
+                                      "Setter Window": pushrx.SetterWindow,
+                                      "Setter Temperature Average": pushrx.SetterTemperatureAverage,
+                                      "Setter Temperature DHT22": pushrx.SetterDHTTemperature,
+                                      "Setter Humidity DHT22": pushrx.SetterDHTHumidity,
+                                      "Setter Temperature SCD30": pushrx.SetterSCD30Temperature,
+                                      "Setter Humidity SCD30": pushrx.SetterSCD30Humidity,
+                                      "Setter CO2 SCD30": pushrx.SetterSCD30CO2,
+                                      "Setter Temperature DS18 1": pushrx.SetterDS1Temperature,
+                                      "Setter Temperature DS18 2": pushrx.SetterDS2Temperature,
+                                      "Setter Kp": pushrx.SetterKp,
+                                      "Setter Ki": pushrx.SetterKi,
+                                      "Setter Kd": pushrx.SetterKd,
+                                      "Setter Error Count": pushrx.SetterErrorCount,
+                                      "Hatcher Temperature DS18 Extra": pushrx.HatcherDS1Temperature
                                     }
                                 }
                             )
@@ -206,8 +205,10 @@ def main():
                 setterRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=300)
-                logging.info(msg = 'RX|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
+                pushData(client = client, timer=300, pushrx = setterRX)
+                logging.info(msg = 'RX'
+                                   'Setter Mode {}'
+                                   '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
                     setterRX.SetterMode,
                     setterRX.SetterKp,
                     setterRX.SetterKi,
