@@ -39,7 +39,7 @@ class structSettingsRX(object):
     SetterMinWindow = 0.0
     SetterPIDWindow = 0.0
     SetterWindow = 0.0
-    SetterDHTTemperatureAverage = 0.0
+    SetterTemperatureAverage = 0.0
     SetterDHTTemperature = 0.0
     SetterDHTHumidity = 0.0
     SetterSCD30Temperature = 0.0
@@ -47,7 +47,7 @@ class structSettingsRX(object):
     SetterSCD30CO2 = 0.0
     SetterDS1Temperature = 0.0
     SetterDS2Temperature = 0.0
-    SetterDHTErrorCount = 0.0
+    SetterErrorCount = 0.0
     HatcherDS1Temperature = 0.0
 
 
@@ -80,7 +80,7 @@ def pushData(client, timer):
                                       "Setter Min Window": structSettingsRX.SetterMinWindow,
                                       "Setter PID Window": structSettingsRX.SetterPIDWindow,
                                       "Setter Window": structSettingsRX.SetterWindow,
-                                      "Setter Temperature Average": structSettingsRX.SetterDHTTemperatureAverage,
+                                      "Setter Temperature Average": structSettingsRX.SetterTemperatureAverage,
                                       "Setter Temperature DHT22": structSettingsRX.SetterDHTTemperature,
                                       "Setter Humidity DHT22": structSettingsRX.SetterDHTHumidity,
                                       "Setter Temperature SCD30": structSettingsRX.SetterSCD30Temperature,
@@ -91,7 +91,7 @@ def pushData(client, timer):
                                       "Setter Kp": structSettingsRX.SetterKp,
                                       "Setter Ki": structSettingsRX.SetterKi,
                                       "Setter Kd": structSettingsRX.SetterKd,
-                                      "Setter Error Count": structSettingsRX.SetterDHTErrorCount,
+                                      "Setter Error Count": structSettingsRX.SetterErrorCount,
                                       "Hatcher Temperature DS18 Extra": structSettingsRX.HatcherDS1Temperature
                                     }
                                 }
@@ -160,7 +160,7 @@ def main():
                 structSettingsRX.SetterDHTHumidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDHTTemperatureAverage = link.rx_obj(obj_type='f', start_pos=recSize)
+                structSettingsRX.SetterTemperatureAverage = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 structSettingsRX.SetterSCD30Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
@@ -178,7 +178,7 @@ def main():
                 structSettingsRX.SetterDS2Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                structSettingsRX.SetterDHTErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
+                structSettingsRX.SetterErrorCount = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 structSettingsRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
@@ -193,7 +193,7 @@ def main():
                     structSettingsRX.SetterMaxWindow,
                     structSettingsRX.SetterMinWindow,
                     structSettingsRX.SetterWindow,
-                    structSettingsRX.SetterDHTTemperatureAverage,
+                    structSettingsRX.SetterTemperatureAverage,
                     structSettingsRX.SetterDHTTemperature,
                     structSettingsRX.SetterDHTHumidity,
                     structSettingsRX.SetterSCD30Temperature,
@@ -201,7 +201,7 @@ def main():
                     structSettingsRX.SetterSCD30CO2,
                     structSettingsRX.SetterDS1Temperature,
                     structSettingsRX.SetterDS2Temperature,
-                    structSettingsRX.SetterDHTErrorCount,
+                    structSettingsRX.SetterErrorCount,
                     structSettingsRX.HatcherDS1Temperature
                     )
                 )
