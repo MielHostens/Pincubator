@@ -12,23 +12,20 @@ logging.basicConfig(level=logging.DEBUG,
 class structSettingsTX(object):
     def __init__(self):
         self.HatcherMode = 0
-        self.HatcherKp = 0.0
-        self.HatcherKi = 0.0
-        self.HatcherKd = 0.0
-        self.HatcherMaxWindow = 1250.0
-        self.HatcherMinWindow = 100.0
+        self.HatcherTempTargetExtTemperature = 40.1
+        self.HatcherTempTargetIntTemperature = 37.6
+        self.HatcherTempTargetIntHumidity = 65.0
 
 
 class structSettingsRX(object):
     def __init__(self):
         self.HatcherMode = 0
-        self.HatcherKp = 0.0
-        self.HatcherKi = 0.0
-        self.HatcherKd = 0.0
-        self.HatcherMaxWindow = 0.0
-        self.HatcherMinWindow = 0.0
-        self.HatcherPIDWindow = 0.0
-        self.HatcherWindow = 0.0
+        self.HatcherTempTargetExtTemperature = 0.0
+        self.HatcherTempTargetIntTemperature = 0.0
+        self.HatcherTempTargetIntHumidity = 0.0
+        self.HatcherTargetExtTemperature = 0.0
+        self.HatcherTargetIntTemperature = 0.0
+        self.HatcherTargetIntHumidity = 0.0
         self.HatcherIntDSTempAverage = 0.0
         self.HatcherIntDSTemperature = 0.0
         self.HatcherIntDSErrorCount = 0.0
@@ -81,13 +78,12 @@ def pushData(client, timer, pushrx):
                                 {"ts": int(round(time.time() * 1000)),
                                   "values": {
                                       "Hatcher Mode": pushrx.HatcherMode,
-                                      "Hatcher Kp": pushrx.HatcherKp,
-                                      "Hatcher Ki": pushrx.HatcherKi,
-                                      "Hatcher Kd": pushrx.HatcherKd,
-                                      "Hatcher Max Window":pushrx.HatcherMaxWindow,
-                                      "Hatcher Min Window": pushrx.HatcherMinWindow,
-                                      "Hatcher PID Window": pushrx.HatcherPIDWindow,
-                                      "Hatcher Window": pushrx.HatcherWindow,
+                                      "Hatcher Temp External Temperature Target": pushrx.HatcherTempTargetExtTemperature,
+                                      "Hatcher Temp Internal Temperature Target": pushrx.HatcherTempTargetIntTemperature,
+                                      "Hatcher Temp Internal Humidity Target": pushrx.HatcherTempTargetIntHumidity,
+                                      "Hatcher External Temperature Target":pushrx.HatcherTargetExtTemperature,
+                                      "Hatcher Internal Temperature Target": pushrx.HatcherTargetIntTemperature,
+                                      "Hatcher Internal Humidity Target": pushrx.HatcherTargetIntHumidity,
                                       "Hatcher Internal Temperature Average": pushrx.HatcherIntDSTempAverage,
                                       "Hatcher Internal Temperature DS18": pushrx.HatcherIntDSTemperature,
                                       "Hatcher Internal Error Count": pushrx.HatcherIntDSErrorCount,
@@ -130,22 +126,18 @@ def main():
 
         logging.info(msg='Start settings | {} | {} | {} | {} | {} | {} '.format(
             setterTX.HatcherMode,
-            setterTX.HatcherKp,
-            setterTX.HatcherKi,
-            setterTX.HatcherKd,
-            setterTX.HatcherMaxWindow,
-            setterTX.HatcherMinWindow
+            setterTX.HatcherTempTargetExtTemperature,
+            setterTX.HatcherTempTargetIntTemperature,
+            setterTX.HatcherTempTargetIntHumidity
             )
         )
         logging.info("Setup OK")
         while True:
             sendSize = 0
             sendSize = link.tx_obj(setterTX.HatcherMode, start_pos=sendSize, val_type_override="B")
-            sendSize = link.tx_obj(setterTX.HatcherKp, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(setterTX.HatcherKi, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(setterTX.HatcherKd, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(setterTX.HatcherMaxWindow, start_pos=sendSize, val_type_override="f")
-            sendSize = link.tx_obj(setterTX.HatcherMinWindow, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherTempTargetExtTemperature, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherTempTargetIntTemperature, start_pos=sendSize, val_type_override="f")
+            sendSize = link.tx_obj(setterTX.HatcherTempTargetIntHumidity, start_pos=sendSize, val_type_override="f")
             link.send(sendSize)
             if link.available():
                 recSize = 0
@@ -153,25 +145,22 @@ def main():
                 setterRX.HatcherMode = link.rx_obj(obj_type='b', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['B']
 
-                setterRX.HatcherKp = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTempTargetExtTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                setterRX.HatcherKi = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTempTargetIntTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                setterRX.HatcherKd = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTempTargetIntHumidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                setterRX.HatcherMaxWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTargetExtTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                setterRX.HatcherMinWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTargetIntTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                setterRX.HatcherPIDWindow = link.rx_obj(obj_type='f', start_pos=recSize)
-                recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
-
-                setterRX.HatcherWindow = link.rx_obj(obj_type='f', start_pos=recSize)
+                setterRX.HatcherTargetIntHumidity = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 setterRX.HatcherIntDSTempAverage = link.rx_obj(obj_type='f', start_pos=recSize)
@@ -205,14 +194,14 @@ def main():
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
                 pushData(client = client, timer=300, pushrx = setterRX)
-                logging.info(msg = 'RX | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}'.format(
+                logging.info(msg = 'RX|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
                     setterRX.HatcherMode,
-                    setterRX.HatcherKp,
-                    setterRX.HatcherKi,
-                    setterRX.HatcherKd,
-                    setterRX.HatcherMaxWindow,
-                    setterRX.HatcherMinWindow,
-                    setterRX.HatcherWindow,
+                    setterRX.HatcherTempTargetExtTemperature,
+                    setterRX.HatcherTempTargetIntTemperature,
+                    setterRX.HatcherTempTargetIntHumidity,
+                    setterRX.HatcherTargetExtTemperature,
+                    setterRX.HatcherTargetIntTemperature,
+                    setterRX.HatcherTargetIntHumidity,
                     setterRX.HatcherIntDSTempAverage,
                     setterRX.HatcherIntDSTemperature,
                     setterRX.HatcherIntDSErrorCount,
