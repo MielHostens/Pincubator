@@ -12,11 +12,11 @@ logging.basicConfig(level=logging.DEBUG,
 
 class structSettingsTX(object):
     def __init__(self):
-        self.SetterMode = 0  # an instance attribute
-        self.SetterKp = 0.0  # an instance attribute
+        self.SetterMode = 3  # an instance attribute
+        self.SetterKp = 750.0  # an instance attribute
         self.SetterKi = 0.0  # an instance attribute
         self.SetterKd = 0.0  # an instance attribute
-        self.SetterMaxWindow = 1250.0  # an instance attribute
+        self.SetterMaxWindow = 2000.0  # an instance attribute
         self.SetterMinWindow = 100.0
 
 
