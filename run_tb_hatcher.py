@@ -105,7 +105,7 @@ def main():
     global setterTX
 
     try:
-        port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
+        port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
 
         client = TBDeviceMqttClient(host, "9aqkgXRwb56wOks7miIv")
