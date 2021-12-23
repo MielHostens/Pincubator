@@ -80,7 +80,7 @@ def readSettings():
         p = pickle.load(input)
     return p
 
-def telegramAlarm(update, timer, pushrx)-> None:
+def telegramAlarm(update: Update, timer, pushrx) -> None:
     global AlarmTimer
     global Alarm
     if (time.time() - AlarmTimer > timer):
