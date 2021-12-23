@@ -89,20 +89,20 @@ unsigned long RxTxTimer = 28000;
 
 struct STRUCTRX {
   byte SetterMode = 3;
-  double SetterKp = 750.0;
+  double SetterKp = 2500.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 2000.0;
-  double SetterMinWindow = 100.0;
+  double SetterMaxWindow = 5000.0;
+  double SetterMinWindow = 500.0;
 } settingsStructRX;
 
 struct STRUCT {
   byte SetterMode = 3;
-  double SetterKp = 750.0;
+  double SetterKp = 2500.0;
   double SetterKi = 0.0;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 2000.0;
-  double SetterMinWindow = 100.0;
+  double SetterMaxWindow = 5000.0;
+  double SetterMinWindow = 500.0;
   double SetterPIDWindow = 0.0;
   double SetterWindow = 0.0;
   double SetterDHTTemperature = 0.0;
@@ -113,7 +113,7 @@ struct STRUCT {
   double SetterSCD30CO2 = 0.0;
   double SetterDS1Temperature = 0.0;
   double SetterDS2Temperature = 0.0;
-  double SetterErrorCount = 0;
+  double SetterErrorCount = 0.0;
   double HatcherDS1Temperature = 0.0;
 } settingsStruct;
 
@@ -426,7 +426,7 @@ void SetterEggTurn(unsigned long interval) {
     if (Debug) Serial.println("Turning Eggs");
     SetterEggTurnTimer = millis();
     digitalWrite(SetterPinRelayEggTurner, RelayON);
-    delay(12000); //2.5 rpm at 50 Hz -> 12 sec for half turn
+    delay(3000); //2.5 rpm at 50 Hz -> 12 sec for half turn
     digitalWrite(SetterPinRelayEggTurner, RelayOFF);
   }
 }

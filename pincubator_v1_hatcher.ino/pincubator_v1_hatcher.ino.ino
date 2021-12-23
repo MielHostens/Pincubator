@@ -339,6 +339,7 @@ void HatcherReadSensors(unsigned long interval) {
 void HatcherManualMode() {
   settingsStruct.HatcherTargetExtTemperature = settingsStructRX.HatcherTempTargetExtTemperature;
   settingsStruct.HatcherTargetIntTemperature = settingsStructRX.HatcherTempTargetIntTemperature;
+  settingsStruct.HatcherTargetIntHumidity = settingsStructRX.HatcherTempTargetIntHumidity;
 }
 
 void HatcherExtTemperatureCheck() {
@@ -360,7 +361,7 @@ void HatcherIntTemperatureCheck(unsigned long interval) {
     if (Debug) Serial.println("STEP ADJUST SETTER WINDOW");
     HatcherTemperatureTargetTimer = millis();
     if (settingsStruct.HatcherIntDSTempAverage > settingsStruct.HatcherTargetIntTemperature + 0.3) {
-      settingsStruct.HatcherTargetExtTemperature -= 0.5;
+      settingsStruct.HatcherTargetExtTemperature -= 0.3;
     }
     else if (settingsStruct.HatcherIntDSTempAverage < settingsStruct.HatcherTargetIntTemperature - 0.3) {
       settingsStruct.HatcherTargetExtTemperature += 0.1;

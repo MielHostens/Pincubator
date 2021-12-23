@@ -80,7 +80,7 @@ def readSettings():
         p = pickle.load(input)
     return p
 
-def telegramAlarm(update, timer, pushrx)
+def telegramAlarm(update, timer, pushrx)-> None:
     global AlarmTimer
     global Alarm
     if (time.time() - AlarmTimer > timer):
@@ -304,8 +304,6 @@ def main():
                 setterRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=300, pushrx = setterRX)
-                LastSerial = datetime.datetime.now()
                 logging.info(msg = 'RX'
                                    'Setter Mode {}'
                                    '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
@@ -328,6 +326,8 @@ def main():
                     setterRX.HatcherDS1Temperature
                     )
                 )
+                pushData(client = client, timer=300, pushrx = setterRX)
+                LastSerial = datetime.datetime.now()
 
             elif link.status < 0:
                 if link.status == txfer.CRC_ERROR:
