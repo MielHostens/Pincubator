@@ -86,13 +86,18 @@ def telegramAlarm(update: Update, timer, pushrx) -> None:
     if (time.time() - AlarmTimer > timer):
         AlarmTimer = time.time()
         if Alarm == 1:
+            logging.info("Checking alarms")
             if pushrx.SetterTemperatureAverage < 36.0:
+                logging.info("Alarm")
                 update.message.reply_text("Setter temperature < 36.0°C")
             elif pushrx.SetterTemperatureAverage > 38.5:
+                logging.info("Alarm")
                 update.message.reply_text("Setter temperature > 38.5°C")
             if pushrx.HatcherDS1Temperature < 36.0:
+                logging.info("Alarm")
                 update.message.reply_text("Hatcher temperature < 36.0°C")
             elif pushrx.HatcherDS1Temperature > 38.5:
+                logging.info("Alarm")
                 update.message.reply_text("Hatcher temperature > 38.5°C")
 
 def pushData(client, timer, pushrx):
