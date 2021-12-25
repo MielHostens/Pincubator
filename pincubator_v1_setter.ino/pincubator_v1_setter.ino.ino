@@ -11,7 +11,7 @@
 // Pin definitions & sensors
 // ************************************************
 #define BlinkerPin 2 //Blinker pin
-#define SetterPinRelayEggTurner 3 // Pin for relay for egg turner in setter 
+#define SetterPinSSREggTurner 3 // Pin for relay for egg turner in setter 
 #define SetterPinSSRTemperature 4 //SSR Setter pin
 #define SetterPinDHT 5
 #define SetterPinDS1 6
@@ -144,12 +144,12 @@ void setup()
   // * PINS
   // ***************************************************************/
   // Set pins as outputs
-  pinMode(SetterPinRelayEggTurner, OUTPUT);
+  pinMode(SetterPinSSREggTurner, OUTPUT);
   pinMode(SetterPinSSRTemperature, OUTPUT);
   pinMode(BlinkerPin, OUTPUT);
   
   // Initialize Pins so relays are inactive at reset
-  digitalWrite(SetterPinRelayEggTurner, RelayOFF);
+  digitalWrite(SetterPinSSREggTurner, LOW);
   digitalWrite(SetterPinSSRTemperature, LOW);
 
   // **************************************************************
@@ -425,9 +425,9 @@ void SetterEggTurn(unsigned long interval) {
   {
     if (Debug) Serial.println("Turning Eggs");
     SetterEggTurnTimer = millis();
-    digitalWrite(SetterPinRelayEggTurner, RelayON);
+    digitalWrite(SetterPinSSREggTurner, HIGH);
     delay(3000); //2.5 rpm at 50 Hz -> 12 sec for half turn
-    digitalWrite(SetterPinRelayEggTurner, RelayOFF);
+    digitalWrite(SetterPinSSREggTurner, LOW);
   }
 }
 
