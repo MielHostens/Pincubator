@@ -11,7 +11,7 @@
 // Pin definitions & sensors
 // ************************************************
 #define BlinkerPin 2 //Blinker pin
-#define SetterPinSSREggTurner 3 // Pin for relay for egg turner in setter 
+#define SetterPinSSREggTurner 11 // Pin for relay for egg turner in setter 
 #define SetterPinSSRTemperature 4 //SSR Setter pin
 #define SetterPinDHT 5
 #define SetterPinDS1 6
@@ -89,10 +89,10 @@ unsigned long RxTxTimer = 28000;
 
 struct STRUCTRX {
   byte SetterMode = 3;
-  double SetterKp = 2500.0;
-  double SetterKi = 0.0;
+  double SetterKp = 500.0;
+  double SetterKi = 0.1;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 5000.0;
+  double SetterMaxWindow = 2000.0;
   double SetterMinWindow = 500.0;
 } settingsStructRX;
 
@@ -187,9 +187,9 @@ void setup()
   // **************************************************************
   // * SETUP FINISHED
   // ***************************************************************/
-  digitalWrite(BlinkerPin, HIGH);
-  delay(5000);
-  digitalWrite(BlinkerPin, LOW);
+  digitalWrite(SetterPinSSREggTurner, HIGH);
+  delay(3000);
+  digitalWrite(SetterPinSSREggTurner, LOW);
 }
 
 
