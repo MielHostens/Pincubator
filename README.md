@@ -96,7 +96,7 @@ nohup python3 run_setter.py > setter.out &
 
 #### Runtime hatcher
 
-A [Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [run_tb_hatcher.py](/run_setter.py)
+A [Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [run_hatcher.py](/run_setter.py)
 
 * The process connects to the serial readings of the Arduino via USB.
 * Values are send to [ThingsBoard](https://127.0.0.1:8080/) to monitor the values over time
@@ -105,6 +105,6 @@ A [Python 3.7](https://docs.python.org/3/whatsnew/3.7.html) process called [run_
 
 ```
 cd Pincubator
-nohup python3 run_tb_hatcher.py > hatcher.out &
+nohup python3 run_hatcher.py > hatcher.out &
 ```
 
