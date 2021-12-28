@@ -78,7 +78,7 @@ initial_setup.py
 
 3. Install all python packages
 
-4. I have no-ip.org installed to allow remote control
+4. I have [no-ip.org](https://www.noip.com/support/knowledgebase/install-ip-duc-onto-raspberry-pi/) installed to allow remote control 
 
 #### Runtime setter
 
