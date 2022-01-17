@@ -80,6 +80,8 @@ unsigned long SetterSensorTimer = 2500;
 unsigned long SetterTemperatureTargetTimer = 0;
 unsigned long SetterWindowTimer = 5000;
 unsigned long SetterEggTurnTimer = 0;
+unsigned long SetterEggPWMTimer = 7500;
+unsigned long SetterEggPWM = 200;
 unsigned long BlinkerTimer = 0;
 unsigned long RxTxTimer = 28000;
 
@@ -92,16 +94,16 @@ struct STRUCTRX {
   double SetterKp = 500.0;
   double SetterKi = 0.1;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 2000.0;
+  double SetterMaxWindow = 1250.0;
   double SetterMinWindow = 500.0;
 } settingsStructRX;
 
 struct STRUCT {
   byte SetterMode = 3;
-  double SetterKp = 2500.0;
-  double SetterKi = 0.0;
+  double SetterKp = 500.0;
+  double SetterKi = 0.1;
   double SetterKd = 0.0;
-  double SetterMaxWindow = 5000.0;
+  double SetterMaxWindow = 1250.0;
   double SetterMinWindow = 500.0;
   double SetterPIDWindow = 0.0;
   double SetterWindow = 0.0;
@@ -174,7 +176,7 @@ void setup()
   // * PID
   // ***************************************************************/
   mySetterPID.SetMode(AUTOMATIC);
-  mySetterPID.SetOutputLimits(100, 9000);
+  mySetterPID.SetOutputLimits(500, 1250);
   mySetterPID.SetSampleTime(60000);
 
   // **************************************************************
@@ -283,7 +285,8 @@ void Setter() {
       break;
   }
   SetterPWM(10000);
-  SetterEggTurn(3600000); //every hour
+  //SetterEggTurn(3600000); //every hour
+  SetterEggPWMTurn(60000); //every minute
 }
 
 void SetterManualMode() {
@@ -429,6 +432,19 @@ void SetterEggTurn(unsigned long interval) {
     delay(3000); //2.5 rpm at 50 Hz -> 12 sec for half turn
     digitalWrite(SetterPinSSREggTurner, LOW);
   }
+}
+
+void SetterEggPWMTurn(unsigned long interval) {
+  /************************************************
+    SETTER TURNING
+  ************************************************/
+  if (millis() - SetterEggPWMTimer >= interval)
+  { //time to shift the Relay Window
+    if (Debug) Serial.println("Checking setter window");
+    SetterEggPWMTimer += interval;
+  }
+  if (SetterEggPWM > millis() - SetterEggPWMTimer) digitalWrite(SetterPinSSREggTurner, HIGH);
+  else digitalWrite(SetterPinSSREggTurner, LOW);
 }
 
 void SetterPWM(unsigned long interval) {
