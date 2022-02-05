@@ -11,7 +11,8 @@
 // Pin definitions & sensors
 // ************************************************
 #define BlinkerPin 2 //Blinker pin
-#define SetterPinSSREggTurner 11 // Pin for relay for egg turner in setter 
+#define SetterPinSSREggTurnerOne 11 // Pin for relay for egg turner in setter 
+#define SetterPinSSREggTurnerTwo 13 // Pin for relay for egg turner in setter
 #define SetterPinSSRTemperature 4 //SSR Setter pin
 #define SetterPinDHT 5
 #define SetterPinDS1 6
@@ -79,9 +80,10 @@ unsigned long SetterSensorEssentialTimer = 2500;
 unsigned long SetterSensorTimer = 2500;
 unsigned long SetterTemperatureTargetTimer = 0;
 unsigned long SetterWindowTimer = 5000;
-unsigned long SetterEggTurnTimer = 0;
-unsigned long SetterEggPWMTimer = 7500;
-unsigned long SetterEggPWM = 200;
+unsigned long SetterEggTurnTimerOne = 0;
+unsigned long SetterEggPWMTimerOne = 7500;
+unsigned long SetterEggPWMTimerTwo = 3607500;
+unsigned long SetterEggPWM = 60000;
 unsigned long BlinkerTimer = 0;
 unsigned long RxTxTimer = 28000;
 
@@ -146,12 +148,14 @@ void setup()
   // * PINS
   // ***************************************************************/
   // Set pins as outputs
-  pinMode(SetterPinSSREggTurner, OUTPUT);
+  pinMode(SetterPinSSREggTurnerOne, OUTPUT);
+  digitalWrite(SetterPinSSREggTurnerOne, LOW);
+  pinMode(SetterPinSSREggTurnerTwo, OUTPUT);
+  digitalWrite(SetterPinSSREggTurnerTwo, LOW);
   pinMode(SetterPinSSRTemperature, OUTPUT);
   pinMode(BlinkerPin, OUTPUT);
   
   // Initialize Pins so relays are inactive at reset
-  digitalWrite(SetterPinSSREggTurner, LOW);
   digitalWrite(SetterPinSSRTemperature, LOW);
 
   // **************************************************************
@@ -189,9 +193,13 @@ void setup()
   // **************************************************************
   // * SETUP FINISHED
   // ***************************************************************/
-  digitalWrite(SetterPinSSREggTurner, HIGH);
-  delay(3000);
-  digitalWrite(SetterPinSSREggTurner, LOW);
+  digitalWrite(SetterPinSSREggTurnerOne, HIGH);
+  delay(60000);
+  digitalWrite(SetterPinSSREggTurnerOne, LOW);
+  delay(1000);
+  digitalWrite(SetterPinSSREggTurnerTwo, HIGH);
+  delay(60000);
+  digitalWrite(SetterPinSSREggTurnerTwo, LOW);
 }
 
 
@@ -286,7 +294,8 @@ void Setter() {
   }
   SetterPWM(10000);
   //SetterEggTurn(3600000); //every hour
-  SetterEggPWMTurn(60000); //every minute
+  SetterEggPWMTurnOne(7200000); //every 2 hours
+  SetterEggPWMTurnTwo(7200000); //every 2 hours
 }
 
 void SetterManualMode() {
@@ -420,31 +429,38 @@ void SetterReadSensors(unsigned long interval) {
   }
 }
 
-void SetterEggTurn(unsigned long interval) {
+void SetterEggPWMTurnOne(unsigned long interval) {
   /************************************************
     SETTER TURNING
   ************************************************/
-  if (millis() - SetterEggTurnTimer >= interval)
-  {
-    if (Debug) Serial.println("Turning Eggs");
-    SetterEggTurnTimer = millis();
-    digitalWrite(SetterPinSSREggTurner, HIGH);
-    delay(3000); //2.5 rpm at 50 Hz -> 12 sec for half turn
-    digitalWrite(SetterPinSSREggTurner, LOW);
-  }
-}
-
-void SetterEggPWMTurn(unsigned long interval) {
-  /************************************************
-    SETTER TURNING
-  ************************************************/
-  if (millis() - SetterEggPWMTimer >= interval)
+  if (millis() - SetterEggPWMTimerOne >= interval)
   { //time to shift the Relay Window
     if (Debug) Serial.println("Checking setter window");
-    SetterEggPWMTimer += interval;
+    SetterEggPWMTimerOne += interval;
   }
-  if (SetterEggPWM > millis() - SetterEggPWMTimer) digitalWrite(SetterPinSSREggTurner, HIGH);
-  else digitalWrite(SetterPinSSREggTurner, LOW);
+  if (SetterEggPWM > millis() - SetterEggPWMTimerOne) 
+  {
+    digitalWrite(SetterPinSSREggTurnerTwo, LOW);
+    digitalWrite(SetterPinSSREggTurnerOne, HIGH);
+    } 
+  else digitalWrite(SetterPinSSREggTurnerOne, LOW);
+}
+
+void SetterEggPWMTurnTwo(unsigned long interval) {
+  /************************************************
+    SETTER TURNING
+  ************************************************/
+  if (millis() - SetterEggPWMTimerTwo >= interval)
+  { //time to shift the Relay Window
+    if (Debug) Serial.println("Checking setter window");
+    SetterEggPWMTimerTwo += interval;
+  }
+  if (SetterEggPWM > millis() - SetterEggPWMTimerTwo) 
+  {
+    digitalWrite(SetterPinSSREggTurnerOne, LOW);
+    digitalWrite(SetterPinSSREggTurnerTwo, HIGH);
+    } 
+  else digitalWrite(SetterPinSSREggTurnerTwo, LOW);
 }
 
 void SetterPWM(unsigned long interval) {
