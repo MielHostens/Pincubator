@@ -316,7 +316,7 @@ def main():
 
                 logging.info(msg = 'RX'
                                    'Setter Mode {}'
-                                   '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
+                                   '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
                     setterRX.SetterMode,
                     setterRX.SetterKp,
                     setterRX.SetterKi,
