@@ -59,7 +59,7 @@ def callback(client, result, extra):
 def updateSettings(key, value):
     global setterTX
     global Alarm
-    global pushSeconds
+
     if key.__contains__("Alarm"):
         Alarm = value
         logging.info("Alarm mode changed")
