@@ -83,7 +83,7 @@ unsigned long SetterWindowTimer = 5000;
 unsigned long SetterEggTurnTimerOne = 0;
 unsigned long SetterEggPWMTimerOne = 7500;
 unsigned long SetterEggPWMTimerTwo = 3607500;
-unsigned long SetterEggPWM = 60000;
+unsigned long SetterEggPWM = 30000;
 unsigned long BlinkerTimer = 0;
 unsigned long RxTxTimer = 28000;
 
@@ -119,6 +119,7 @@ struct STRUCT {
   double SetterDS2Temperature = 0.0;
   double SetterErrorCount = 0.0;
   double HatcherDS1Temperature = 0.0;
+  double SetterTurn = 0.0;
 } settingsStruct;
 
 // ************************************************
@@ -442,6 +443,7 @@ void SetterEggPWMTurnOne(unsigned long interval) {
   {
     digitalWrite(SetterPinSSREggTurnerTwo, LOW);
     digitalWrite(SetterPinSSREggTurnerOne, HIGH);
+    settingsStruct.SetterTurn = 1.0;
     } 
   else digitalWrite(SetterPinSSREggTurnerOne, LOW);
 }
@@ -459,6 +461,7 @@ void SetterEggPWMTurnTwo(unsigned long interval) {
   {
     digitalWrite(SetterPinSSREggTurnerOne, LOW);
     digitalWrite(SetterPinSSREggTurnerTwo, HIGH);
+    settingsStruct.SetterTurn = 2.0;
     } 
   else digitalWrite(SetterPinSSREggTurnerTwo, LOW);
 }

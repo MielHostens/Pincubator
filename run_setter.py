@@ -44,6 +44,7 @@ class structSettingsRX(object):
         self.SetterDS2Temperature = 0.0
         self.SetterErrorCount = 0.0
         self.HatcherDS1Temperature = 0.0
+        self.SetterTurn = 0.0
 
 setterTX = structSettingsTX()
 setterRX = structSettingsRX()
@@ -125,7 +126,8 @@ def pushData(client, timer, pushrx):
                                       "Setter Ki": pushrx.SetterKi,
                                       "Setter Kd": pushrx.SetterKd,
                                       "Setter Error Count": pushrx.SetterErrorCount,
-                                      "Hatcher Temperature DS18 Extra": pushrx.HatcherDS1Temperature
+                                      "Hatcher Temperature DS18 Extra": pushrx.HatcherDS1Temperature,
+                                      "Setter Turn": pushrx.SetterTurn
                                     }
                                 }
                             )
@@ -309,6 +311,9 @@ def main():
                 setterRX.HatcherDS1Temperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
+                setterRX.SetterTurn = link.rx_obj(obj_type='f', start_pos=recSize)
+                recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
+
                 logging.info(msg = 'RX'
                                    'Setter Mode {}'
                                    '|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
@@ -328,7 +333,8 @@ def main():
                     setterRX.SetterDS1Temperature,
                     setterRX.SetterDS2Temperature,
                     setterRX.SetterErrorCount,
-                    setterRX.HatcherDS1Temperature
+                    setterRX.HatcherDS1Temperature,
+                    setterRX.SetterTurn,
                     )
                 )
                 pushData(client = client, timer=300, pushrx = setterRX)
