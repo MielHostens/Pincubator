@@ -343,7 +343,7 @@ def main():
                     setterRX.SetterTurn,
                     )
                 )
-                pushData(client = client, timer=300, pushrx = setterRX)
+                pushData(client = client, timer=pushSeconds, pushrx = setterRX)
                 LastSerial = datetime.datetime.now()
 
             elif link.status < 0:
