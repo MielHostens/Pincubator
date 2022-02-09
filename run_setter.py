@@ -9,7 +9,6 @@ pushTimer = time.time()
 LastSerial = datetime.datetime.now()
 AlarmTimer = time.time()
 Alarm = 0
-pushSeconds = 300
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
@@ -63,9 +62,6 @@ def updateSettings(key, value):
     global pushSeconds
     if key.__contains__("Alarm"):
         Alarm = value
-        logging.info("Alarm mode changed")
-    if key.__contains__("PushSeconds"):
-        pushSeconds = value
         logging.info("Alarm mode changed")
     if key.__contains__("Mode"):
         setattr(setterTX, key, int(value))
@@ -191,7 +187,6 @@ def main():
     global setterRX
     global setterTX
     global LastSerial
-    global pushSeconds
 
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
@@ -343,7 +338,7 @@ def main():
                     setterRX.SetterTurn,
                     )
                 )
-                pushData(client = client, timer=pushSeconds, pushrx = setterRX)
+                pushData(client = client, timer=300, pushrx = setterRX)
                 LastSerial = datetime.datetime.now()
 
             elif link.status < 0:
