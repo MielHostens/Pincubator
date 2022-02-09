@@ -246,7 +246,7 @@ def main():
         logging.info("Setup OK")
         while True:
             # Check for alarm and set
-            telegramAlarm(update=updater, timer=pushSeconds, pushrx=setterRX)
+            telegramAlarm(update=updater, timer=300, pushrx=setterRX)
             sendSize = 0
             sendSize = link.tx_obj(setterTX.SetterMode, start_pos=sendSize, val_type_override="B")
             sendSize = link.tx_obj(setterTX.SetterKp, start_pos=sendSize, val_type_override="f")
