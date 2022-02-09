@@ -9,6 +9,7 @@ pushTimer = time.time()
 LastSerial = datetime.datetime.now()
 AlarmTimer = time.time()
 Alarm = 0
+pushSeconds = 300
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
@@ -59,8 +60,12 @@ def callback(client, result, extra):
 def updateSettings(key, value):
     global setterTX
     global Alarm
+    global pushSeconds
     if key.__contains__("Alarm"):
         Alarm = value
+        logging.info("Alarm mode changed")
+    if key.__contains__("PushSeconds"):
+        pushSeconds = value
         logging.info("Alarm mode changed")
     if key.__contains__("Mode"):
         setattr(setterTX, key, int(value))
@@ -186,6 +191,7 @@ def main():
     global setterRX
     global setterTX
     global LastSerial
+    global pushSeconds
 
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
@@ -245,7 +251,7 @@ def main():
         logging.info("Setup OK")
         while True:
             # Check for alarm and set
-            telegramAlarm(update=updater, timer=300, pushrx=setterRX)
+            telegramAlarm(update=updater, timer=pushSeconds, pushrx=setterRX)
             sendSize = 0
             sendSize = link.tx_obj(setterTX.SetterMode, start_pos=sendSize, val_type_override="B")
             sendSize = link.tx_obj(setterTX.SetterKp, start_pos=sendSize, val_type_override="f")
