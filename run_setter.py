@@ -191,6 +191,7 @@ def main():
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
+        pushinterval = sys.argv[3] if len(sys.argv) > 1 else 300
 
         client = TBDeviceMqttClient(host, "YMtjzN0FX0V5xzA62fHg")
         client.connect()
@@ -338,7 +339,7 @@ def main():
                     setterRX.SetterTurn,
                     )
                 )
-                pushData(client = client, timer=300, pushrx = setterRX)
+                pushData(client = client, timer=pushinterval, pushrx = setterRX)
                 LastSerial = datetime.datetime.now()
 
             elif link.status < 0:
