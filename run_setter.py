@@ -4,11 +4,13 @@ from tb_gateway_mqtt import TBDeviceMqttClient
 import sys, json, codecs, os, time, logging, pickle, datetime
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import psutil
 
 pushTimer = time.time()
 LastSerial = datetime.datetime.now()
 AlarmTimer = time.time()
 Alarm = 0
+
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
@@ -104,6 +106,8 @@ def telegramAlarm(update: Update, timer, pushrx) -> None:
 
 def pushData(client, timer, pushrx):
     global pushTimer
+    obj_Disk = psutil.disk_usage('/')
+
     if (time.time() - pushTimer > timer):
         pushTimer = time.time()
         client.request_attributes()
@@ -128,7 +132,8 @@ def pushData(client, timer, pushrx):
                                       "Setter Kd": pushrx.SetterKd,
                                       "Setter Error Count": pushrx.SetterErrorCount,
                                       "Hatcher Temperature DS18 Extra": pushrx.HatcherDS1Temperature,
-                                      "Setter Turn": pushrx.SetterTurn
+                                      "Setter Turn": pushrx.SetterTurn,
+                                      "Disk Usage": obj_Disk.percent
                                     }
                                 }
                             )
