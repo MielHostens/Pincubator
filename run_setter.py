@@ -191,7 +191,7 @@ def main():
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM1"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
-        pushinterval = sys.argv[3] if len(sys.argv) > 1 else 300
+        pushinterval = int(sys.argv[3]) if len(sys.argv) > 1 else 300
 
         client = TBDeviceMqttClient(host, "YMtjzN0FX0V5xzA62fHg")
         client.connect()
