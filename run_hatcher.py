@@ -107,6 +107,7 @@ def main():
     try:
         port = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyACM0"  # replace 0 with whatever default you want
         host = sys.argv[2] if len(sys.argv) > 1 else "localhost"
+        pushinterval = int(sys.argv[3]) if len(sys.argv) > 1 else 300
 
         client = TBDeviceMqttClient(host, "Dfmnyl0Ab6os7u0HD3KO")
         client.connect()
@@ -193,7 +194,7 @@ def main():
                 setterRX.SetterDSTemperature = link.rx_obj(obj_type='f', start_pos=recSize)
                 recSize += txfer.STRUCT_FORMAT_LENGTHS['f']
 
-                pushData(client = client, timer=300, pushrx = setterRX)
+                pushData(client = client, timer=pushinterval, pushrx = setterRX)
                 logging.info(msg = 'RX|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}'.format(
                     setterRX.HatcherMode,
                     setterRX.HatcherTempTargetExtTemperature,
