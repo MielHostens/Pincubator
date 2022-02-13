@@ -72,7 +72,10 @@ const int numReadings = 6;
 double SetterReadings[numReadings];      // the readings from the analog input
 int SetterTempReadIndex = 0;              // the index of the current reading
 double SetterTempTotal = 0.0;                  // the running total
-
+double SetterTemperatureReadingOne = 0.0;
+double SetterTemperatureReadingTwo = 0.0;
+double SetterTemperatureReading = 0.0;
+          
 // ************************************************
 // Timers
 // ************************************************
@@ -366,16 +369,27 @@ void SetterReadEssentialSensors(unsigned long interval) {
       } else {
           if (Debug) Serial.println("Using real values setter essential sensors");
           SetterDS1.requestTemperatures();
-          double SetterTemperatureReading = SetterDS1.getTempCByIndex(0);
-          if (isnan(SetterTemperatureReading))
+          SetterDS2.requestTemperatures();
+          SetterTemperatureReadingOne = SetterDS1.getTempCByIndex(0);
+          SetterTemperatureReadingTwo = SetterDS2.getTempCByIndex(0);
+          if (isnan(SetterTemperatureReadingOne))
             {
-              if (Debug) Serial.println("Setter DHT error");
+              if (Debug) Serial.println("Setter DS1 error");
               settingsStruct.SetterErrorCount += 1;
-              SetterTemperatureReading = settingsStruct.SetterDS2Temperature; // BACKUP
-              //return; return statement takes it back
+              settingsStruct.SetterDS2Temperature = SetterTemperatureReadingTwo;
+              SetterTemperatureReading = SetterTemperatureReadingTwo; // BACKUP
             }
+          else if (isnan(SetterTemperatureReadingTwo))             
+            {
+              if (Debug) Serial.println("Setter DS2 error");
+              settingsStruct.SetterErrorCount += 1;
+              settingsStruct.SetterDS1Temperature = SetterTemperatureReadingOne;
+              SetterTemperatureReading = SetterTemperatureReadingOne; // BACKUP
+            }  
           else {
-            settingsStruct.SetterDS1Temperature = SetterTemperatureReading;       
+              settingsStruct.SetterDS1Temperature = SetterTemperatureReadingOne;
+              settingsStruct.SetterDS2Temperature = SetterTemperatureReadingTwo;
+              SetterTemperatureReading = (SetterTemperatureReadingOne + SetterTemperatureReadingTwo)/2.0;
             }
           SetterTempTotal = SetterTempTotal - SetterReadings[SetterTempReadIndex];// subtract the last reading:
           SetterReadings[SetterTempReadIndex] = SetterTemperatureReading;// read from the sensor:    
@@ -418,9 +432,7 @@ void SetterReadSensors(unsigned long interval) {
           else {
             settingsStruct.SetterDHTTemperature = SetterTemperatureReading;
             settingsStruct.SetterDHTHumidity = SetterHumidityReading;      
-            }
-          SetterDS2.requestTemperatures();
-          settingsStruct.SetterDS2Temperature = SetterDS2.getTempCByIndex(0);          
+            }      
           HatcherDS1.requestTemperatures();
           settingsStruct.HatcherDS1Temperature = HatcherDS1.getTempCByIndex(0); 
           scd30.read();
