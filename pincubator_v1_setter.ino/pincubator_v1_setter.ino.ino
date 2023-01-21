@@ -58,7 +58,7 @@ SerialTransfer myTransfer;
 // Targets
 // ************************************************
 //Setter goals
-double SetterTargetTemperature = 37.8;
+double SetterTargetTemperature = 37.81;
 double SetterTargetHumidity = 45.0;
 
 //CO2 goals
@@ -68,7 +68,7 @@ int SetterTargetCO2 = 5000; //Max ppm
 // Smoothers
 // ************************************************
 //DHT Smoothing
-const int numReadings = 6;
+const int numReadings = 60;
 double SetterReadings[numReadings];      // the readings from the analog input
 int SetterTempReadIndex = 0;              // the index of the current reading
 double SetterTempTotal = 0.0;                  // the running total
